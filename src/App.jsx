@@ -8,6 +8,8 @@ import Goals from './components/Goals';
 import HealthMetrics from './components/HealthMetrics';
 import MealPlanner from './components/MealPlanner';
 import FoodRecommendations from './components/FoodRecommendations';
+import RefrigeratorAnalysis from './components/RefrigeratorAnalysis';
+import RefrigeratorGrid from './components/RefrigeratorGrid';
 
 function App() {
   return (
@@ -23,6 +25,8 @@ function App() {
             <Route path="/health" element={<HealthMetrics />} />
             <Route path="/meal-planner" element={<MealPlanner />} />
             <Route path="/recommendations" element={<FoodRecommendations />} />
+            <Route path="/refrigerator" element={<RefrigeratorGrid />} />
+            <Route path="/refrigerator/analyze" element={<RefrigeratorAnalysis />} />
           </Routes>
         </main>
       </div>

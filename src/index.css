@@ -2,39 +2,60 @@
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
   background-color: #242424;
-
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Add theme colors */
+  --primary: #646cff;
+  --primary-dark: #535bf2;
+  --primary-light: #747bff;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+/* Base HTML/Body Setup */
+html {
+  position: fixed;
+  height: 100%;
+  overflow: hidden;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   display: flex;
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  /* Mobile optimizations */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
+/* Links */
+a {
+  font-weight: 500;
+  color: var(--primary);
+  text-decoration: inherit;
+}
+
+a:hover {
+  color: var(--primary-dark);
+}
+
+/* Typography */
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
 }
 
+/* Buttons */
 button {
   border-radius: 8px;
   border: 1px solid transparent;
@@ -45,24 +66,166 @@ button {
   background-color: #1a1a1a;
   cursor: pointer;
   transition: border-color 0.25s;
+  /* Mobile optimizations */
+  touch-action: manipulation;
 }
+
 button:hover {
-  border-color: #646cff;
+  border-color: var(--primary);
 }
+
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+/* Mobile Form Elements */
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+input[type="date"],
+input[type="time"],
+select,
+textarea {
+  font-size: 16px !important;
+  padding: 0.6em 1.2em;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background-color: transparent;
+  color: inherit;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in forwards;
+}
+
+.slide-in {
+  animation: slideIn 0.3s ease-in forwards;
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 768px) {
+  html {
+    -webkit-text-size-adjust: none;
+  }
+
+  .safe-area-padding {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* PWA Display Mode */
+@media all and (display-mode: standalone) {
+  .browser-ui {
+    display: none;
+  }
+  
+  .status-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: env(safe-area-inset-top);
+    background-color: var(--primary);
+    z-index: 50;
+  }
+}
+
+/* Light Mode Theme */
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
     background-color: #ffffff;
   }
+  
   a:hover {
-    color: #747bff;
+    color: var(--primary-light);
   }
+  
   button {
     background-color: #f9f9f9;
   }
+
+  input, select, textarea {
+    border-color: #e2e8f0;
+  }
+}
+
+/* Custom Component Styles */
+.card-base {
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.loading-spinner {
+  animation: spin 1s linear infinite;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid var(--primary);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* iOS Overscroll Fix */
+.overscroll-fix {
+  overscroll-behavior-y: none;
+}
+
+/* Image Preview */
+.img-preview {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+/* Analysis Results */
+.analysis-result {
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Health Score Colors */
+.score-high {
+  color: #22c55e;
+}
+
+.score-medium {
+  color: #f59e0b;
+}
+
+.score-low {
+  color: #ef4444;
 }
