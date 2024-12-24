@@ -1,7 +1,8 @@
 import React, { useState, useCallback } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import { Camera, Upload, X, AlertCircle } from 'lucide-react';
 import OpenAIService from '../services/openaiService';
-import dbService from '../db/database';
+import dbService from '../firebase/dbService';
 import LoadingSpinner from './LoadingSpinner';
 import CameraComponent from './Camera';
 
@@ -16,35 +17,39 @@ const ErrorAlert = ({ children }) => (
   </div>
 );
 
-const processImage = async (imageData) => {
+const compressImage = async (imageData) => {
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      const MAX_WIDTH = 1024;
-      const MAX_HEIGHT = 1024;
-      
       let width = img.width;
       let height = img.height;
       
-      // Calculate new dimensions while maintaining aspect ratio
-      if (width > height && width > MAX_WIDTH) {
-        height *= MAX_WIDTH / width;
-        width = MAX_WIDTH;
-      } else if (height > MAX_HEIGHT) {
-        width *= MAX_HEIGHT / height;
-        height = MAX_HEIGHT;
+      const MAX_WIDTH = 800;
+      const MAX_HEIGHT = 800;
+
+      if (width > height) {
+        if (width > MAX_WIDTH) {
+          height *= MAX_WIDTH / width;
+          width = MAX_WIDTH;
+        }
+      } else {
+        if (height > MAX_HEIGHT) {
+          width *= MAX_HEIGHT / height;
+          height = MAX_HEIGHT;
+        }
       }
-      
+
       canvas.width = width;
       canvas.height = height;
-      
+
       const ctx = canvas.getContext('2d');
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, width, height);
       ctx.drawImage(img, 0, 0, width, height);
-      
-      // Convert to JPEG with reduced quality
-      const processedImage = canvas.toDataURL('image/jpeg', 0.7);
-      resolve(processedImage);
+
+      const quality = Math.min(0.7, 800 / Math.max(width, height));
+      resolve(canvas.toDataURL('image/jpeg', quality));
     };
     img.src = imageData;
   });
@@ -56,10 +61,11 @@ const RefrigeratorAnalysis = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showCamera, setShowCamera] = useState(false);
+  const { user } = useAuth();
 
   const openaiService = new OpenAIService();
 
-  const handleImageUpload = useCallback((event) => {
+  const handleImageUpload = useCallback(async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
@@ -73,22 +79,29 @@ const RefrigeratorAnalysis = () => {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setSelectedImage(reader.result);
-      setAnalysis(null);
-      setError(null);
-    };
-    reader.onerror = () => {
-      setError('Failed to read image file');
-    };
-    reader.readAsDataURL(file);
+    try {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const compressed = await compressImage(e.target.result);
+          setSelectedImage(compressed);
+          setAnalysis(null);
+          setError(null);
+        } catch (err) {
+          setError('Failed to process image');
+        }
+      };
+      reader.onerror = () => setError('Failed to read image file');
+      reader.readAsDataURL(file);
+    } catch (error) {
+      setError('Failed to process image');
+    }
   }, []);
 
   const handleCameraCapture = async (imageData) => {
     try {
-      const processedImage = await processImage(imageData);
-      setSelectedImage(processedImage);
+      const compressed = await compressImage(imageData);
+      setSelectedImage(compressed);
       setShowCamera(false);
       setAnalysis(null);
       setError(null);
@@ -105,14 +118,16 @@ const RefrigeratorAnalysis = () => {
       return;
     }
 
+    if (!user) {
+      setError('Please log in to analyze your refrigerator');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
-      // Process the image before analysis
-      const processedImage = await processImage(selectedImage);
-      const base64Image = processedImage.split(',')[1];
-      
+      const base64Image = selectedImage.split(',')[1];
       console.log('Analyzing refrigerator image...');
       console.log('Image size (bytes):', Math.round(base64Image.length * 0.75));
 
@@ -122,18 +137,23 @@ const RefrigeratorAnalysis = () => {
         throw new Error('Failed to analyze refrigerator content');
       }
 
-      // Save to database
-      await dbService.addFoodEntry({
-        userId: 1,
-        imagePath: processedImage,
+      // Create a properly structured entry object
+      const entry = {
         type: 'refrigerator',
-        items: result.items,
-        expiringItems: result.expiringItems,
-        suggestedRecipes: result.suggestedRecipes,
+        imagePath: selectedImage,
+        items: result.items || [],
+        expiringItems: result.expiringItems || [],
+        suggestedRecipes: result.suggestedRecipes || [],
         analysisData: JSON.stringify(result),
-        created_at: new Date().toISOString()
-      });
+        created_at: new Date(),
+        // Add required fields that were missing before
+        foodName: 'Refrigerator Analysis',
+        calories: 0,
+        healthScore: 0
+      };
 
+      // Save to database with the complete entry object
+      await dbService.addFoodEntry(user.uid, entry);
       setAnalysis(result);
     } catch (error) {
       console.error('Analysis error:', error);
@@ -141,7 +161,7 @@ const RefrigeratorAnalysis = () => {
       if (error.message.includes('quota')) {
         setError('API quota exceeded. Please try again later.');
       } else if (error.message.includes('content_policy')) {
-        setError('Image could not be analyzed. Please ensure it shows refrigerator contents clearly.');
+        setError('Image could not be analyzed. Please try a different image.');
       } else if (error.message.includes('API_NOT_CONFIGURED')) {
         setError('OpenAI API is not properly configured.');
       } else {
@@ -158,6 +178,19 @@ const RefrigeratorAnalysis = () => {
     setError(null);
     setShowCamera(false);
   };
+
+  if (!user) {
+    return (
+      <div className="max-w-2xl mx-auto p-4">
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+          <div className="flex">
+            <AlertCircle className="h-5 w-5 text-yellow-400 mr-2" />
+            <p className="text-sm text-yellow-700">Please log in to analyze your refrigerator.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto p-4">
@@ -216,7 +249,7 @@ const RefrigeratorAnalysis = () => {
             {loading ? (
               <div className="flex items-center justify-center">
                 <LoadingSpinner />
-                <span className="ml-2">Analyzing Contents...</span>
+                <span className="ml-2">Analyzing...</span>
               </div>
             ) : (
               'Analyze Contents'
@@ -228,15 +261,15 @@ const RefrigeratorAnalysis = () => {
       {analysis && (
         <div className="card-base space-y-4">
           <h3 className="text-xl font-semibold">Analysis Results</h3>
-          
+
           {/* Available Items */}
           <div>
-            <h4 className="font-medium text-gray-700 mb-2">Available Items:</h4>
-            <div className="flex flex-wrap gap-2">
+            <h4 className="text-sm font-medium text-gray-700">Available Items:</h4>
+            <div className="flex flex-wrap gap-2 mt-2">
               {analysis.items.map((item, index) => (
                 <span
                   key={index}
-                  className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm"
+                  className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-sm"
                 >
                   {item}
                 </span>
@@ -247,10 +280,13 @@ const RefrigeratorAnalysis = () => {
           {/* Expiring Items */}
           {analysis.expiringItems?.length > 0 && (
             <div>
-              <h4 className="font-medium text-gray-700 mb-2">Items to Use Soon:</h4>
-              <div className="space-y-2">
+              <h4 className="text-sm font-medium text-gray-700">Items to Use Soon:</h4>
+              <div className="space-y-2 mt-2">
                 {analysis.expiringItems.map((item, index) => (
-                  <div key={index} className="bg-yellow-50 p-3 rounded-lg text-yellow-700 text-sm">
+                  <div
+                    key={index}
+                    className="bg-yellow-50 text-yellow-700 px-3 py-2 rounded"
+                  >
                     {item}
                   </div>
                 ))}
@@ -261,14 +297,19 @@ const RefrigeratorAnalysis = () => {
           {/* Suggested Recipes */}
           {analysis.suggestedRecipes?.length > 0 && (
             <div>
-              <h4 className="font-medium text-gray-700 mb-2">Suggested Recipes:</h4>
-              <div className="space-y-3">
+              <h4 className="text-sm font-medium text-gray-700">Suggested Recipes:</h4>
+              <div className="space-y-3 mt-2">
                 {analysis.suggestedRecipes.map((recipe, index) => (
-                  <div key={index} className="bg-green-50 p-4 rounded-lg">
-                    <p className="font-medium text-gray-800">{recipe.name}</p>
-                    <p className="text-sm text-gray-600 mt-1">{recipe.description}</p>
-                    {recipe.ingredients && (
-                      <div className="mt-2 flex flex-wrap gap-1">
+                  <div
+                    key={index}
+                    className="bg-green-50 p-3 rounded"
+                  >
+                    <p className="font-medium text-green-800">{recipe.name}</p>
+                    {recipe.description && (
+                      <p className="text-sm text-green-600 mt-1">{recipe.description}</p>
+                    )}
+                    {recipe.ingredients && recipe.ingredients.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
                         {recipe.ingredients.map((ingredient, idx) => (
                           <span
                             key={idx}

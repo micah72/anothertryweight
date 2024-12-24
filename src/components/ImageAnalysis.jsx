@@ -1,7 +1,8 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import { Camera, Upload, X, AlertCircle } from 'lucide-react';
 import OpenAIService from '../services/openaiService';
-import dbService from '../db/database';
+import dbService from '../firebase/dbService';
 import LoadingSpinner from './LoadingSpinner';
 import CameraComponent from './Camera';
 
@@ -16,35 +17,39 @@ const ErrorAlert = ({ children }) => (
   </div>
 );
 
-const processImage = async (imageData) => {
+const compressImage = async (imageData) => {
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      const MAX_WIDTH = 1024;
-      const MAX_HEIGHT = 1024;
-      
       let width = img.width;
       let height = img.height;
       
-      // Calculate new dimensions while maintaining aspect ratio
-      if (width > height && width > MAX_WIDTH) {
-        height *= MAX_WIDTH / width;
-        width = MAX_WIDTH;
-      } else if (height > MAX_HEIGHT) {
-        width *= MAX_HEIGHT / height;
-        height = MAX_HEIGHT;
+      const MAX_WIDTH = 800;
+      const MAX_HEIGHT = 800;
+
+      if (width > height) {
+        if (width > MAX_WIDTH) {
+          height *= MAX_WIDTH / width;
+          width = MAX_WIDTH;
+        }
+      } else {
+        if (height > MAX_HEIGHT) {
+          width *= MAX_HEIGHT / height;
+          height = MAX_HEIGHT;
+        }
       }
-      
+
       canvas.width = width;
       canvas.height = height;
-      
+
       const ctx = canvas.getContext('2d');
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, width, height);
       ctx.drawImage(img, 0, 0, width, height);
-      
-      // Convert to JPEG with reduced quality
-      const processedImage = canvas.toDataURL('image/jpeg', 0.7);
-      resolve(processedImage);
+
+      // Use a fixed quality of 0.8 for better consistency
+      resolve(canvas.toDataURL('image/jpeg', 0.8));
     };
     img.src = imageData;
   });
@@ -56,42 +61,47 @@ const ImageAnalysis = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showCamera, setShowCamera] = useState(false);
+  const { user } = useAuth();
 
-  // Create OpenAI service instance
   const openaiService = new OpenAIService();
 
-  const handleImageUpload = useCallback((event) => {
+  const handleImageUpload = useCallback(async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       setError('Please select a valid image file');
       return;
     }
 
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       setError('Image size should be less than 5MB');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setSelectedImage(reader.result);
-      setAnalysis(null);
-      setError(null);
-    };
-    reader.onerror = () => {
-      setError('Failed to read image file');
-    };
-    reader.readAsDataURL(file);
+    try {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const compressed = await compressImage(e.target.result);
+          setSelectedImage(compressed);
+          setAnalysis(null);
+          setError(null);
+        } catch (err) {
+          setError('Failed to process image');
+        }
+      };
+      reader.onerror = () => setError('Failed to read image file');
+      reader.readAsDataURL(file);
+    } catch (error) {
+      setError('Failed to process image');
+    }
   }, []);
 
   const handleCameraCapture = async (imageData) => {
     try {
-      const processedImage = await processImage(imageData);
-      setSelectedImage(processedImage);
+      const compressed = await compressImage(imageData);
+      setSelectedImage(compressed);
       setShowCamera(false);
       setAnalysis(null);
       setError(null);
@@ -108,40 +118,37 @@ const ImageAnalysis = () => {
       return;
     }
 
+    if (!user) {
+      setError('Please log in to analyze images');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
-      // Process the image before analysis
-      const processedImage = await processImage(selectedImage);
-      const base64Image = processedImage.split(',')[1];
-      
-      // Add error logging
       console.log('Analyzing image...');
-      console.log('Image size (bytes):', Math.round(base64Image.length * 0.75));
-
-      const result = await openaiService.analyzeImage(base64Image);
+      
+      // Send the full image data URL
+      const result = await openaiService.analyzeImage(selectedImage);
 
       if (result.error) {
         throw new Error('Failed to analyze image content');
       }
 
-      // Save to database
-      await dbService.addFoodEntry({
-        userId: 1,
-        imagePath: processedImage,
+      await dbService.addFoodEntry(user.uid, {
+        imagePath: selectedImage,
         foodName: result.foodName,
         calories: result.calories || 0,
         healthScore: result.healthScore || 0,
         analysisData: JSON.stringify(result),
-        created_at: new Date().toISOString()
+        type: 'food'
       });
 
       setAnalysis(result);
     } catch (error) {
       console.error('Analysis error:', error);
       
-      // More specific error messages
       if (error.message.includes('quota')) {
         setError('API quota exceeded. Please try again later.');
       } else if (error.message.includes('content_policy')) {
@@ -163,11 +170,23 @@ const ImageAnalysis = () => {
     setShowCamera(false);
   };
 
+  if (!user) {
+    return (
+      <div className="max-w-2xl mx-auto p-4">
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+          <div className="flex">
+            <AlertCircle className="h-5 w-5 text-yellow-400 mr-2" />
+            <p className="text-sm text-yellow-700">Please log in to analyze food images.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-2xl mx-auto p-4">
       <h2 className="text-2xl font-bold mb-6">Analyze Food</h2>
 
-      {/* Camera Component */}
       {showCamera && (
         <CameraComponent
           onCapture={handleCameraCapture}
@@ -175,7 +194,6 @@ const ImageAnalysis = () => {
         />
       )}
       
-      {/* Image Capture Options */}
       {!selectedImage && (
         <div className="grid grid-cols-2 gap-4 mb-6">
           <button
@@ -199,10 +217,8 @@ const ImageAnalysis = () => {
         </div>
       )}
 
-      {/* Error Message */}
       {error && <ErrorAlert>{error}</ErrorAlert>}
 
-      {/* Selected Image Preview */}
       {selectedImage && (
         <div className="card-base mb-6 relative">
           <button
@@ -233,7 +249,6 @@ const ImageAnalysis = () => {
         </div>
       )}
 
-      {/* Analysis Results */}
       {analysis && (
         <div className="card-base space-y-4">
           <h3 className="text-xl font-semibold">Analysis Results</h3>

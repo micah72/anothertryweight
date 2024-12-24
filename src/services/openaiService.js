@@ -1,9 +1,7 @@
 class OpenAIService {
   constructor() {
-    // Get API key from environment variables
     const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
     
-    // Validate API key format and presence
     if (!apiKey || apiKey === 'undefined' || apiKey === 'your_openai_api_key_here') {
       this.configurationError = new Error('OpenAI API key not found in environment variables');
       console.error('OpenAI API key not found in environment variables. Ensure you have:',
@@ -31,6 +29,51 @@ class OpenAIService {
     return this.configurationError ? this.configurationError.message : null;
   }
 
+  async generateFoodRecommendations(context) {
+    if (!this.isConfigured()) {
+      throw new Error(this.getConfigurationError() || 'OpenAI service is not properly configured');
+    }
+
+    try {
+      const prompt = this.buildRecommendationsPrompt(context);
+      
+      const response = await fetch(this.apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: "gpt-4o",
+          messages: [
+            {
+              role: "system",
+              content: "You are a nutritionist and meal planning expert. Provide personalized meal recommendations based on user profile, available ingredients, and dietary needs."
+            },
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 1500
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('OpenAI API Error Response:', errorData);
+        throw new Error(this.handleAPIError(response.status));
+      }
+
+      const data = await response.json();
+      return this.parseRecommendationsResponse(data.choices[0].message.content);
+    } catch (error) {
+      console.error('Error generating food recommendations:', error);
+      throw error;
+    }
+  }
+
   async analyzeImage(base64Image) {
     if (!this.isConfigured()) {
       throw new Error(this.getConfigurationError() || 'OpenAI service is not properly configured');
@@ -48,7 +91,7 @@ class OpenAIService {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: "gpt-4o", // Correct model name
+          model: "gpt-4o",
           messages: [
             {
               role: "user",
@@ -75,7 +118,8 @@ class OpenAIService {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error?.message || `API Error: ${response.status}`);
+        console.error('OpenAI API Error Response:', errorData);
+        throw new Error(this.handleAPIError(response.status));
       }
 
       const data = await response.json();
@@ -136,7 +180,8 @@ class OpenAIService {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error?.message || `API Error: ${response.status}`);
+        console.error('OpenAI API Error Response:', errorData);
+        throw new Error(this.handleAPIError(response.status));
       }
 
       const data = await response.json();
@@ -153,21 +198,100 @@ class OpenAIService {
     }
   }
 
-  parseAnalysisResponse(content) {
+  buildRecommendationsPrompt(context) {
+    const { userProfile, recentMeals, availableIngredients } = context;
+
+    return `Generate personalized meal recommendations based on the following information:
+
+User Profile:
+- Age: ${userProfile.age}
+- Gender: ${userProfile.gender}
+- Weight: ${userProfile.weight}kg
+- Height: ${userProfile.height}cm
+- Target Weight: ${userProfile.targetWeight}kg
+- Daily Calorie Target: ${userProfile.dailyCalorieTarget}kcal
+
+Available Ingredients:
+${availableIngredients.join(', ')}
+
+Recent Meals:
+${recentMeals.map(meal => `- ${meal.name} (${meal.calories}kcal)`).join('\n')}
+
+Please provide recommendations in the following JSON format:
+{
+  "meals": [
+    {
+      "name": "Meal Name",
+      "description": "Brief description",
+      "calories": calories_number,
+      "ingredients": ["ingredient1", "ingredient2"]
+    }
+  ],
+  "nutritionalGaps": [
+    {
+      "nutrient": "Nutrient Name",
+      "recommendation": "Recommendation text"
+    }
+  ],
+  "mealPlan": {
+    "Monday": [
+      {
+        "name": "Meal Name",
+        "calories": calories_number
+      }
+    ]
+  }
+}`;
+  }
+
+  parseRecommendationsResponse(content) {
     try {
-      // Clean the content of any markdown or extra formatting
       let cleanContent = content.replace(/```json\s*|\s*```/g, '').trim();
-      
-      // Find the JSON object in the response
       const jsonMatch = cleanContent.match(/{[\s\S]*}/);
       if (!jsonMatch) {
         throw new Error('Invalid response format');
       }
 
-      // Parse the cleaned content
       const parsedData = JSON.parse(jsonMatch[0]);
 
-      // Return a properly structured response
+      return {
+        meals: Array.isArray(parsedData.meals) ? parsedData.meals.map(meal => ({
+          name: String(meal.name || 'Unnamed Meal'),
+          description: String(meal.description || 'No description available'),
+          calories: Number(meal.calories) || 0,
+          ingredients: Array.isArray(meal.ingredients) ? meal.ingredients : []
+        })) : [],
+        nutritionalGaps: Array.isArray(parsedData.nutritionalGaps) ? parsedData.nutritionalGaps.map(gap => ({
+          nutrient: String(gap.nutrient || 'Unknown Nutrient'),
+          recommendation: String(gap.recommendation || 'No recommendation available')
+        })) : [],
+        mealPlan: parsedData.mealPlan || null
+      };
+    } catch (error) {
+      console.error('Error parsing recommendations:', error);
+      return {
+        meals: [],
+        nutritionalGaps: [
+          {
+            nutrient: 'General Nutrition',
+            recommendation: 'Aim for balanced meals with protein, vegetables, and whole grains'
+          }
+        ],
+        mealPlan: null
+      };
+    }
+  }
+
+  parseAnalysisResponse(content) {
+    try {
+      let cleanContent = content.replace(/```json\s*|\s*```/g, '').trim();
+      const jsonMatch = cleanContent.match(/{[\s\S]*}/);
+      if (!jsonMatch) {
+        throw new Error('Invalid response format');
+      }
+
+      const parsedData = JSON.parse(jsonMatch[0]);
+
       return {
         foodName: String(parsedData.foodName || 'Unknown Food'),
         calories: Number(parsedData.calories) || 0,
@@ -190,19 +314,14 @@ class OpenAIService {
 
   parseRefrigeratorAnalysisResponse(content) {
     try {
-      // Clean the content of any markdown or extra formatting
       let cleanContent = content.replace(/```json\s*|\s*```/g, '').trim();
-      
-      // Find the JSON object in the response
       const jsonMatch = cleanContent.match(/{[\s\S]*}/);
       if (!jsonMatch) {
         throw new Error('Invalid response format');
       }
 
-      // Parse the cleaned content
       const parsedData = JSON.parse(jsonMatch[0]);
 
-      // Return a properly structured response with default values if fields are missing
       return {
         items: Array.isArray(parsedData.items) ? parsedData.items : [],
         expiringItems: Array.isArray(parsedData.expiringItems) ? parsedData.expiringItems : [],
@@ -241,6 +360,8 @@ class OpenAIService {
         return 'API rate limit exceeded. Please try again later.';
       case 500:
         return 'OpenAI server error. Please try again later.';
+      case 404:
+        return 'API endpoint not found. Please check the API configuration.';
       default:
         return `OpenAI API error: ${status}`;
     }
