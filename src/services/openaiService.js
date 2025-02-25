@@ -3,16 +3,30 @@ class OpenAIService {
     const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
     
     if (!apiKey || apiKey === 'undefined' || apiKey === 'your_openai_api_key_here') {
-      this.configurationError = new Error('OpenAI API key not found in environment variables');
-      console.error('OpenAI API key not found in environment variables. Ensure you have:',
-        '\n1. Created a .env file in your project root',
-        '\n2. Added VITE_OPENAI_API_KEY=your_key_here to the .env file',
-        '\n3. Restarted your development server');
+      this.configurationError = new Error('API_NOT_CONFIGURED');
+      console.error(
+        '%c OpenAI API key not found in environment variables. %c\n\nPlease follow these steps:', 
+        'background: #f44336; color: white; padding: 2px 6px; border-radius: 2px; font-weight: bold',
+        'font-weight: bold; color: #333'
+      );
+      console.log(
+        '1. Create a .env file in your project root\n' +
+        '2. Add VITE_OPENAI_API_KEY=your_key_here to the .env file\n' +
+        '3. Restart your development server\n\n' +
+        'Note: You need a valid OpenAI API key for image analysis features to work.'
+      );
     } else if (!apiKey.startsWith('sk-') || apiKey.length < 20) {
-      this.configurationError = new Error('Invalid OpenAI API key format');
-      console.error('Invalid OpenAI API key format. The key should:',
-        '\n1. Start with "sk-"',
-        '\n2. Be at least 20 characters long');
+      this.configurationError = new Error('INVALID_API_KEY_FORMAT');
+      console.error(
+        '%c Invalid OpenAI API key format. %c\n\nThe key should:', 
+        'background: #f44336; color: white; padding: 2px 6px; border-radius: 2px; font-weight: bold',
+        'font-weight: bold; color: #333'
+      );
+      console.log(
+        '1. Start with "sk-"\n' +
+        '2. Be at least 20 characters long\n\n' +
+        'Please check your .env file and ensure the API key is correct.'
+      );
     } else {
       this.apiKey = apiKey;
       this.configurationError = null;
@@ -26,12 +40,83 @@ class OpenAIService {
   }
 
   getConfigurationError() {
-    return this.configurationError ? this.configurationError.message : null;
+    if (!this.configurationError) return null;
+    
+    if (this.configurationError.message === 'API_NOT_CONFIGURED') {
+      return 'OpenAI API key not found in environment variables. Please check your .env file.';
+    } else if (this.configurationError.message === 'INVALID_API_KEY_FORMAT') {
+      return 'Invalid OpenAI API key format. The key should start with "sk-" and be at least 20 characters long.';
+    }
+    
+    return this.configurationError.message;
+  }
+
+  // Placeholder method to provide mock data when API is not configured
+  getMockAnalysisData() {
+    return {
+      foodName: "Sample Food Item",
+      calories: 350,
+      healthScore: 7,
+      benefits: "Rich in protein and vitamins",
+      concerns: "Moderate sodium content"
+    };
+  }
+  
+  // Placeholder method to provide mock data when API is not configured
+  getMockRefrigeratorData() {
+    return {
+      items: ["Milk", "Eggs", "Cheese", "Tomatoes", "Lettuce", "Chicken", "Bread"],
+      expiringItems: ["Lettuce", "Tomatoes"],
+      suggestedRecipes: [
+        {
+          name: "Quick Sandwich",
+          description: "A simple sandwich using bread, cheese, and vegetables",
+          ingredients: ["Bread", "Cheese", "Tomatoes", "Lettuce"]
+        },
+        {
+          name: "Scrambled Eggs",
+          description: "Simple scrambled eggs with cheese",
+          ingredients: ["Eggs", "Cheese", "Milk"]
+        }
+      ]
+    };
   }
 
   async generateFoodRecommendations(context) {
     if (!this.isConfigured()) {
-      throw new Error(this.getConfigurationError() || 'OpenAI service is not properly configured');
+      // For demo purposes, we could return mock data if in development mode
+      if (import.meta.env.DEV) {
+        console.warn('Using mock data because OpenAI API is not configured.');
+        return {
+          meals: [
+            {
+              name: "Grilled Chicken Salad",
+              description: "A healthy salad with grilled chicken and mixed vegetables",
+              calories: 350,
+              ingredients: ["Chicken breast", "Lettuce", "Tomatoes", "Cucumber", "Olive oil"]
+            }
+          ],
+          nutritionalGaps: [
+            {
+              nutrient: "Vitamin D",
+              recommendation: "Consider adding more dairy and fatty fish to your diet"
+            }
+          ],
+          mealPlan: {
+            "Monday": [
+              {
+                name: "Oatmeal with Berries",
+                calories: 250
+              },
+              {
+                name: "Grilled Chicken Salad",
+                calories: 350
+              }
+            ]
+          }
+        };
+      }
+      throw new Error('OpenAI API is not properly configured. ' + this.getConfigurationError());
     }
 
     try {
@@ -76,7 +161,12 @@ class OpenAIService {
 
   async analyzeImage(base64Image) {
     if (!this.isConfigured()) {
-      throw new Error(this.getConfigurationError() || 'OpenAI service is not properly configured');
+      // For demo purposes, we could return mock data if in development mode
+      if (import.meta.env.DEV) {
+        console.warn('Using mock data because OpenAI API is not configured.');
+        return this.getMockAnalysisData();
+      }
+      throw new Error('OpenAI API is not properly configured. ' + this.getConfigurationError());
     }
 
     if (!this.validateImage(base64Image)) {
@@ -138,7 +228,12 @@ class OpenAIService {
 
   async analyzeRefrigeratorImage(base64Image) {
     if (!this.isConfigured()) {
-      throw new Error(this.getConfigurationError() || 'OpenAI service is not properly configured');
+      // For demo purposes, we could return mock data if in development mode
+      if (import.meta.env.DEV) {
+        console.warn('Using mock data because OpenAI API is not configured.');
+        return this.getMockRefrigeratorData();
+      }
+      throw new Error('OpenAI API is not properly configured. ' + this.getConfigurationError());
     }
 
     if (!this.validateImage(base64Image)) {

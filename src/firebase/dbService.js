@@ -16,7 +16,7 @@ import { db } from './config';
 
 const dbService = {
   // Real-time listener for food entries
-  subscribeFoodEntries: (userId, type = 'food', callback) => {
+  subscribeFoodEntries: (userId, type = 'food', callback, errorCallback) => {
     try {
       console.log('Setting up subscription for user:', userId);
       
@@ -41,12 +41,27 @@ const dbService = {
           if (error.code === 'failed-precondition') {
             console.log('Index required:', error.message);
           }
-          callback([]);
+          
+          // If an error callback was provided, use it
+          if (typeof errorCallback === 'function') {
+            errorCallback(error);
+          } else {
+            // Otherwise fallback to the main callback with empty array
+            callback([]);
+          }
         }
       );
     } catch (error) {
       console.error('Error setting up subscription:', error);
-      callback([]);
+      
+      // If an error callback was provided, use it
+      if (typeof errorCallback === 'function') {
+        errorCallback(error);
+      } else {
+        // Otherwise fallback to the main callback with empty array
+        callback([]);
+      }
+      
       return () => {};
     }
   },

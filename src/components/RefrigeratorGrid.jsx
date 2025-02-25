@@ -1,43 +1,69 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import dbService from '../firebase/dbService';
-import { Calendar, AlertCircle, Trash2 } from 'lucide-react';
+import { Calendar, AlertCircle, Trash2, RefreshCw } from 'lucide-react';
 import LoadingSpinner from './LoadingSpinner';
 
 const RefrigeratorGrid = () => {
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { user } = useAuth();
+  const { user, isAdmin, isApproved } = useAuth();
+
+  const fetchEntries = async () => {
+    if (!user) {
+      setLoading(false);
+      return () => {};
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Subscribe to real-time updates specifically for refrigerator entries
+      return dbService.subscribeFoodEntries(
+        user.uid,
+        'refrigerator',
+        (newEntries) => {
+          console.log('Received refrigerator entries:', newEntries);
+          setEntries(newEntries);
+          setLoading(false);
+          setError(null);
+        },
+        (err) => {
+          console.error('Error in refrigerator subscription:', err);
+          if (err.code === 'permission-denied') {
+            setError({
+              message: 'You do not have permission to access this data.',
+              details: 'This may be due to missing or invalid permissions in Firestore rules.',
+              code: 'permission-denied'
+            });
+          } else {
+            setError({
+              message: 'Failed to load refrigerator analyses',
+              details: err.message,
+              code: err.code
+            });
+          }
+          setLoading(false);
+        }
+      );
+    } catch (error) {
+      console.error('Error initializing refrigerator entries:', error);
+      setError({
+        message: 'Failed to load refrigerator analyses',
+        details: error.message,
+        code: error.code
+      });
+      setLoading(false);
+      return () => {};
+    }
+  };
 
   useEffect(() => {
     let unsubscribe = () => {};
 
-    const initializeEntries = async () => {
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        // Subscribe to real-time updates specifically for refrigerator entries
-        unsubscribe = dbService.subscribeFoodEntries(
-          user.uid,
-          'refrigerator',
-          (newEntries) => {
-            console.log('Received refrigerator entries:', newEntries);
-            setEntries(newEntries);
-            setLoading(false);
-          }
-        );
-      } catch (error) {
-        console.error('Error initializing refrigerator entries:', error);
-        setError('Failed to load refrigerator analyses');
-        setLoading(false);
-      }
-    };
-
-    initializeEntries();
+    unsubscribe = fetchEntries();
 
     // Cleanup subscription on unmount
     return () => unsubscribe();
@@ -49,7 +75,11 @@ const RefrigeratorGrid = () => {
         await dbService.deleteFoodEntry(entryId);
       } catch (error) {
         console.error('Error deleting entry:', error);
-        setError('Failed to delete analysis');
+        setError({
+          message: 'Failed to delete analysis',
+          details: error.message,
+          code: error.code
+        });
       }
     }
   };
@@ -98,8 +128,48 @@ const RefrigeratorGrid = () => {
   if (!user) {
     return (
       <div className="max-w-6xl mx-auto p-4">
-        <div className="text-center text-gray-500 py-10">
-          Please log in to view your refrigerator analyses.
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4 rounded">
+          <div className="flex">
+            <AlertCircle className="h-5 w-5 text-yellow-400 mr-2" />
+            <p className="text-sm text-yellow-700">Please log in to view your refrigerator analyses.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-6xl mx-auto p-4">
+        <h2 className="text-2xl font-bold mb-6">Refrigerator Analysis History</h2>
+        
+        <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4 rounded">
+          <div className="flex">
+            <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
+            <div className="ml-3">
+              <p className="text-sm text-red-700 font-bold">{error.message}</p>
+              <p className="text-sm text-red-700 mt-1">{error.details}</p>
+              
+              {error.code === 'permission-denied' && (
+                <div className="mt-3">
+                  <p className="text-sm text-red-700">Possible solutions:</p>
+                  <ul className="list-disc pl-5 text-sm mt-1 text-red-700">
+                    <li>Make sure you are logged in with an approved account</li>
+                    <li>Try refreshing the page</li>
+                    <li>Contact the administrator for access</li>
+                  </ul>
+                </div>
+              )}
+              
+              <button 
+                onClick={fetchEntries}
+                className="mt-3 flex items-center bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm"
+              >
+                <RefreshCw className="w-4 h-4 mr-1" />
+                Retry
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -208,7 +278,7 @@ const RefrigeratorGrid = () => {
         })}
       </div>
 
-      {entries.length === 0 && (
+      {entries.length === 0 && !error && (
         <div className="text-center text-gray-500 py-10 bg-white rounded-lg shadow-md">
           <p className="text-lg mb-2">No refrigerator analyses yet.</p>
           <p className="text-sm">Start by analyzing your refrigerator contents!</p>

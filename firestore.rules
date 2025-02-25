@@ -2,18 +2,58 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // This rule allows anyone with your Firestore database reference to view, edit,
-    // and delete all data in your Firestore database. It is useful for getting
-    // started, but it is configured to expire after 30 days because it
-    // leaves your app open to attackers. At that time, all client
-    // requests to your Firestore database will be denied.
-    //
-    // Make sure to write security rules for your app before that time, or else
-    // all client requests to your Firestore database will be denied until you Update
-    // your rules
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return request.auth.uid == 'zFl7YxQw6CaP4ZJPthcvgGq2Rld2';
+    }
+    
+    function isApprovedUser() {
+      return isSignedIn() && 
+        (isAdmin() || exists(/databases/$(database)/documents/approved_users/$(request.auth.uid)));
+    }
+    
+    // Global rules
     match /{document=**} {
-      allow read, write: if request.time < timestamp.date(2025, 1, 22);
+      allow read, write: if isAdmin();
+    }
+    
+    // Waitlist collection - admin only
+    match /waitlist/{document=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Approved users collection - admin can read/write, users can read their own data
+    match /approved_users/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow write: if isAdmin();
+    }
+    
+    // Food entries - users can read/write their own entries
+    match /foodEntries/{entryId} {
+      allow read, write: if isApprovedUser() && 
+        (resource == null || resource.data.userId == request.auth.uid || isAdmin());
+    }
+    
+    // User profiles - users can read/write their own profile
+    match /users/{userId} {
+      allow read, write: if isSignedIn() && 
+        (request.auth.uid == userId || isAdmin());
+    }
+    
+    // Goals - users can read/write their own goals
+    match /goals/{goalId} {
+      allow read, write: if isApprovedUser() && 
+        (resource == null || resource.data.userId == request.auth.uid || isAdmin());
+    }
+    
+    // Meal plans - users can read/write their own meal plans
+    match /mealPlans/{planId} {
+      allow read, write: if isApprovedUser() && 
+        (resource == null || resource.data.userId == request.auth.uid || isAdmin());
     }
   }
 }

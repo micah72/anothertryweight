@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { AlertCircle } from 'lucide-react';
@@ -9,7 +9,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, isAdmin, isApproved, user } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -18,14 +18,25 @@ const Login = () => {
       setError('');
       setLoading(true);
       await login(email, password);
-      navigate('/');
+      
+      // The redirect will happen in the useEffect below
     } catch (error) {
       console.error('Login error:', error);
-      setError('Failed to log in. Please check your credentials.');
+      setError(error.message || 'Failed to log in. Please check your credentials.');
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (user) {
+      if (isAdmin) {
+        navigate('/admin-dashboard');
+      } else if (isApproved) {
+        navigate('/gallery'); // Redirect to Food Gallery as the main user page
+      }
+    }
+  }, [user, isAdmin, isApproved, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -87,14 +98,6 @@ const Login = () => {
                 className="font-medium text-primary hover:text-primary/80"
               >
                 Forgot your password?
-              </Link>
-            </div>
-            <div className="text-sm">
-              <Link 
-                to="/register" 
-                className="font-medium text-primary hover:text-primary/80"
-              >
-                Create an account
               </Link>
             </div>
           </div>
