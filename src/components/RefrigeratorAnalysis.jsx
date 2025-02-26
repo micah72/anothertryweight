@@ -26,8 +26,9 @@ const compressImage = async (imageData) => {
       let width = img.width;
       let height = img.height;
       
-      const MAX_WIDTH = 800;
-      const MAX_HEIGHT = 800;
+      // More aggressive compression for large images
+      const MAX_WIDTH = 600;
+      const MAX_HEIGHT = 600;
 
       if (width > height) {
         if (width > MAX_WIDTH) {
@@ -49,11 +50,27 @@ const compressImage = async (imageData) => {
       ctx.fillRect(0, 0, width, height);
       ctx.drawImage(img, 0, 0, width, height);
 
-      const quality = Math.min(0.7, 800 / Math.max(width, height));
-      resolve(canvas.toDataURL('image/jpeg', quality));
+      // Use a lower quality setting for better compression
+      const quality = 0.5;
+      const compressedImage = canvas.toDataURL('image/jpeg', quality);
+      
+      console.log('Original image size (chars):', imageData.length);
+      console.log('Compressed image size (chars):', compressedImage.length);
+      
+      resolve(compressedImage);
     };
     img.src = imageData;
   });
+};
+
+// Function to ensure image data isn't too large for storage
+const prepareImageForStorage = (imageData) => {
+  // If the image data is too large, we might need to store it differently
+  // For now, we'll just ensure it's a data URL
+  if (!imageData.startsWith('data:')) {
+    return `data:image/jpeg;base64,${imageData}`;
+  }
+  return imageData;
 };
 
 const RefrigeratorAnalysis = () => {
@@ -135,6 +152,7 @@ const RefrigeratorAnalysis = () => {
         : `data:image/jpeg;base64,${selectedImage}`;
       
       console.log('Analyzing refrigerator image...');
+      console.log('Image format check - starts with data:image:', selectedImage.startsWith('data:image'));
 
       const result = await openaiService.analyzeRefrigeratorImage(imageToSend);
 
@@ -145,7 +163,7 @@ const RefrigeratorAnalysis = () => {
       // Create a properly structured entry object
       const entry = {
         type: 'refrigerator',
-        imagePath: selectedImage,
+        imagePath: prepareImageForStorage(selectedImage),
         items: result.items || [],
         expiringItems: result.expiringItems || [],
         suggestedRecipes: result.suggestedRecipes || [],
@@ -157,9 +175,13 @@ const RefrigeratorAnalysis = () => {
         healthScore: 0
       };
 
+      console.log('Saving entry to database with image path:', entry.imagePath);
+      console.log('Image path length:', entry.imagePath.length);
+      
       // Save to database with the complete entry object
       try {
-        await dbService.addFoodEntry(user.uid, entry);
+        const entryId = await dbService.addFoodEntry(user.uid, entry);
+        console.log('Successfully saved entry with ID:', entryId);
       } catch (dbError) {
         console.error('Error saving to database:', dbError);
         // Continue with the analysis even if saving fails
@@ -187,8 +209,8 @@ const RefrigeratorAnalysis = () => {
 
   const saveToGalleryAndRedirect = () => {
     // Analysis is already saved to the database during analyzeImage
-    // Just navigate to the gallery
-    navigate('/gallery');
+    // Navigate to the refrigerator grid instead of the gallery
+    navigate('/refrigerator');
   };
 
   const resetAnalysis = () => {
@@ -341,7 +363,7 @@ const RefrigeratorAnalysis = () => {
                 onClick={saveToGalleryAndRedirect}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
               >
-                View in Gallery
+                View in Refrigerator
               </button>
             </div>
           </div>

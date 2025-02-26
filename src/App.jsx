@@ -87,14 +87,14 @@ function AppContent() {
             } />
             
             {/* Kitchen Menu Routes - Protected */}
-            <Route path="/refrigerator" element={
-              <ApprovedUserRoute>
-                <RefrigeratorGrid />
-              </ApprovedUserRoute>
-            } />
             <Route path="/refrigerator/analyze" element={
               <ApprovedUserRoute>
                 <RefrigeratorAnalysis />
+              </ApprovedUserRoute>
+            } />
+            <Route path="/refrigerator" element={
+              <ApprovedUserRoute>
+                <RefrigeratorGrid />
               </ApprovedUserRoute>
             } />
             <Route path="/scan" element={

@@ -95,7 +95,7 @@ const LandingPage = () => {
               </h1>
               
               <p className="text-blue-100 text-base sm:text-lg mb-6 sm:mb-8">
-                SnapMeal AI is a comprehensive health and meal planning app that leverages the power of photography and artificial intelligence to transform the way you manage your diet.
+                SnapLicious AI is a comprehensive health and meal planning app that leverages the power of photography and artificial intelligence to transform the way you manage your diet.
               </p>
 
               <form onSubmit={handleSubmit} className="mb-6 sm:mb-8">
@@ -164,7 +164,7 @@ const LandingPage = () => {
           <div className="text-center mb-8 sm:mb-12">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">Healthy Meal Options</h2>
             <p className="text-gray-600 max-w-2xl mx-auto px-2">
-              Discover delicious and nutritious meals that fit your diet plan. SnapMeal AI helps you track nutrition and maintain a healthy lifestyle with just a photo.
+              Discover delicious and nutritious meals that fit your diet plan. SnapLicious AI helps you track nutrition and maintain a healthy lifestyle with just a photo.
             </p>
           </div>
 
@@ -196,7 +196,7 @@ const LandingPage = () => {
       <section className="py-12 sm:py-16 bg-white w-full">
         <div className="container mx-auto px-4">
           <div className="text-center mb-8 sm:mb-12">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">Why Choose SnapMeal AI</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">Why Choose SnapLicious AI</h2>
             <p className="text-gray-600 max-w-2xl mx-auto px-2">
               Our AI-powered app is designed to make meal planning, nutrition tracking, and inventory management simple, effective, and personalized to your unique needs.
             </p>
@@ -252,7 +252,7 @@ const LandingPage = () => {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-6 md:mb-0">
-              <h2 className="text-xl sm:text-2xl font-bold">SnapMeal AI</h2>
+              <h2 className="text-xl sm:text-2xl font-bold">SnapLicious AI</h2>
               <p className="text-gray-400 mt-2">Snap, Analyze, Plan</p>
             </div>
 
@@ -265,7 +265,7 @@ const LandingPage = () => {
           </div>
 
           <div className="border-t border-gray-800 mt-6 sm:mt-8 pt-6 sm:pt-8 text-center text-gray-400">
-            <p>&copy; {new Date().getFullYear()} SnapMeal AI. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} SnapLicious AI. All rights reserved.</p>
             <p className="mt-2 text-xs sm:text-sm">*AI Forward: Leveraging cutting-edge artificial intelligence to provide smarter health insights through photography and meal planning.</p>
           </div>
         </div>

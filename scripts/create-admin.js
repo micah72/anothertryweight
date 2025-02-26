@@ -19,7 +19,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-const email = 'admin@snapmealai.com';
+const email = 'admin@snaplicious.ai';
 const password = 'admin123!@#'; // Change this to a secure password
 
 async function createAdminUser() {

@@ -18,6 +18,14 @@ const dbService = {
   // Real-time listener for food entries
   subscribeFoodEntries: (userId, type = 'food', callback, errorCallback) => {
     try {
+      if (!userId) {
+        console.error('No user ID provided for subscription');
+        if (typeof errorCallback === 'function') {
+          errorCallback(new Error('No user ID provided'));
+        }
+        return () => {};
+      }
+      
       console.log('Setting up subscription for user:', userId);
       
       const q = query(
@@ -27,14 +35,23 @@ const dbService = {
         orderBy('created_at', 'desc')
       );
 
-      return onSnapshot(q, 
+      const unsubscribe = onSnapshot(q, 
         (snapshot) => {
-          const entries = [];
-          snapshot.forEach((doc) => {
-            entries.push({ id: doc.id, ...doc.data() });
-          });
-          console.log('Received food entries:', entries);
-          callback(entries);
+          try {
+            const entries = [];
+            snapshot.forEach((doc) => {
+              entries.push({ id: doc.id, ...doc.data() });
+            });
+            console.log('Received food entries:', entries);
+            callback(entries);
+          } catch (error) {
+            console.error('Error processing snapshot data:', error);
+            if (typeof errorCallback === 'function') {
+              errorCallback(error);
+            } else {
+              callback([]);
+            }
+          }
         },
         (error) => {
           console.error('Error in food entries subscription:', error);
@@ -51,6 +68,8 @@ const dbService = {
           }
         }
       );
+      
+      return unsubscribe;
     } catch (error) {
       console.error('Error setting up subscription:', error);
       
@@ -69,10 +88,14 @@ const dbService = {
   // Add food entry
   addFoodEntry: async (userId, data) => {
     try {
+      if (!userId) {
+        throw new Error('No user ID provided');
+      }
+      
       // Ensure all required fields are present
       const entryData = {
         userId,
-        imagePath: data.imagePath,
+        imagePath: data.imagePath || '',
         foodName: data.foodName || 'Unnamed Food',
         calories: Number(data.calories) || 0,
         healthScore: Number(data.healthScore) || 0,
@@ -96,6 +119,10 @@ const dbService = {
   // Get food entries
   getFoodEntries: async (userId, type = 'food', limitCount = 50) => {
     try {
+      if (!userId) {
+        throw new Error('No user ID provided');
+      }
+      
       const q = query(
         collection(db, 'foodEntries'),
         where('userId', '==', userId),
@@ -118,7 +145,12 @@ const dbService = {
   // Delete food entry
   deleteFoodEntry: async (entryId) => {
     try {
+      if (!entryId) {
+        throw new Error('No entry ID provided');
+      }
+      
       await deleteDoc(doc(db, 'foodEntries', entryId));
+      return true;
     } catch (error) {
       console.error('Error deleting food entry:', error);
       throw error;
@@ -128,11 +160,16 @@ const dbService = {
   // Update food entry
   updateFoodEntry: async (entryId, data) => {
     try {
+      if (!entryId) {
+        throw new Error('No entry ID provided');
+      }
+      
       const entryRef = doc(db, 'foodEntries', entryId);
       await updateDoc(entryRef, {
         ...data,
         updated_at: serverTimestamp()
       });
+      return true;
     } catch (error) {
       console.error('Error updating food entry:', error);
       throw error;
@@ -142,6 +179,10 @@ const dbService = {
   // User profile operations
   updateUserProfile: async (userId, data) => {
     try {
+      if (!userId) {
+        throw new Error('No user ID provided');
+      }
+      
       const userQuery = query(collection(db, 'users'), where('userId', '==', userId));
       const querySnapshot = await getDocs(userQuery);
 
@@ -162,6 +203,7 @@ const dbService = {
         const userDoc = querySnapshot.docs[0];
         await updateDoc(doc(db, 'users', userDoc.id), userData);
       }
+      return true;
     } catch (error) {
       console.error('Error updating user profile:', error);
       throw error;
@@ -170,6 +212,10 @@ const dbService = {
 
   getUserProfile: async (userId) => {
     try {
+      if (!userId) {
+        throw new Error('No user ID provided');
+      }
+      
       const q = query(collection(db, 'users'), where('userId', '==', userId));
       const querySnapshot = await getDocs(q);
       
@@ -190,6 +236,10 @@ const dbService = {
   // Goals operations
   addGoal: async (userId, goalData) => {
     try {
+      if (!userId) {
+        throw new Error('No user ID provided');
+      }
+      
       const docRef = await addDoc(collection(db, 'goals'), {
         userId,
         ...goalData,
@@ -205,6 +255,10 @@ const dbService = {
 
   getGoals: async (userId) => {
     try {
+      if (!userId) {
+        throw new Error('No user ID provided');
+      }
+      
       const q = query(
         collection(db, 'goals'),
         where('userId', '==', userId),
@@ -222,30 +276,59 @@ const dbService = {
     }
   },
 
-  subscribeGoals: (userId, callback) => {
+  subscribeGoals: (userId, callback, errorCallback) => {
     try {
+      if (!userId) {
+        console.error('No user ID provided for goals subscription');
+        if (typeof errorCallback === 'function') {
+          errorCallback(new Error('No user ID provided'));
+        } else {
+          callback([]);
+        }
+        return () => {};
+      }
+      
       const q = query(
         collection(db, 'goals'),
         where('userId', '==', userId),
         orderBy('created_at', 'desc')
       );
 
-      return onSnapshot(q, 
+      const unsubscribe = onSnapshot(q, 
         (snapshot) => {
-          const goals = [];
-          snapshot.forEach((doc) => {
-            goals.push({ id: doc.id, ...doc.data() });
-          });
-          callback(goals);
+          try {
+            const goals = [];
+            snapshot.forEach((doc) => {
+              goals.push({ id: doc.id, ...doc.data() });
+            });
+            callback(goals);
+          } catch (error) {
+            console.error('Error processing goals snapshot data:', error);
+            if (typeof errorCallback === 'function') {
+              errorCallback(error);
+            } else {
+              callback([]);
+            }
+          }
         },
         (error) => {
           console.error('Error in goals subscription:', error);
-          callback([]);
+          if (typeof errorCallback === 'function') {
+            errorCallback(error);
+          } else {
+            callback([]);
+          }
         }
       );
+      
+      return unsubscribe;
     } catch (error) {
       console.error('Error setting up goals subscription:', error);
-      callback([]);
+      if (typeof errorCallback === 'function') {
+        errorCallback(error);
+      } else {
+        callback([]);
+      }
       return () => {};
     }
   },

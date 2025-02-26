@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import dbService from '../firebase/dbService';
-import { Calendar, AlertCircle, Trash2, RefreshCw } from 'lucide-react';
+import { Calendar, AlertCircle, Trash2, RefreshCw, Camera } from 'lucide-react';
 import LoadingSpinner from './LoadingSpinner';
+import { Link } from 'react-router-dom';
 
 const RefrigeratorGrid = () => {
   const [entries, setEntries] = useState([]);
@@ -26,6 +27,12 @@ const RefrigeratorGrid = () => {
         'refrigerator',
         (newEntries) => {
           console.log('Received refrigerator entries:', newEntries);
+          // Log each entry to debug image paths
+          newEntries.forEach(entry => {
+            console.log('Entry ID:', entry.id);
+            console.log('Image path:', entry.imagePath);
+            console.log('Analysis data:', entry.analysisData);
+          });
           setEntries(newEntries);
           setLoading(false);
           setError(null);
@@ -66,10 +73,20 @@ const RefrigeratorGrid = () => {
     unsubscribe = fetchEntries();
 
     // Cleanup subscription on unmount
-    return () => unsubscribe();
+    return () => {
+      if (typeof unsubscribe === 'function') {
+        unsubscribe();
+      }
+    };
   }, [user]);
 
-  const handleDeleteEntry = async (entryId) => {
+  const handleDeleteEntry = async (entryId, e) => {
+    // Prevent event propagation to avoid navigation issues
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     if (window.confirm('Are you sure you want to delete this analysis?')) {
       try {
         await dbService.deleteFoodEntry(entryId);
@@ -175,27 +192,50 @@ const RefrigeratorGrid = () => {
     );
   }
 
+  console.log('Rendering refrigerator grid with entries:', entries);
+
   return (
     <div className="max-w-6xl mx-auto p-4">
-      <h2 className="text-2xl font-bold mb-6">Refrigerator Analysis History</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Refrigerator Analysis History</h2>
+        <Link 
+          to="/scan" 
+          className="flex items-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        >
+          <Camera className="w-5 h-5 mr-2" />
+          Scan Refrigerator
+        </Link>
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {entries.map((entry) => {
           const analysisData = parseAnalysisData(entry.analysisData);
-          console.log('Processing entry:', { id: entry.id, analysisData });
+          console.log('Processing entry for display:', { id: entry.id, imagePath: entry.imagePath });
 
           return (
-            <div key={entry.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
-              <div className="aspect-w-16 aspect-h-9 relative group">
-                <img
-                  src={entry.imagePath}
-                  alt="Refrigerator contents"
-                  className="w-full h-48 object-cover"
-                />
+            <div key={entry.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 relative">
+              <div className="relative">
+                {entry.imagePath ? (
+                  <img
+                    src={entry.imagePath}
+                    alt="Refrigerator contents"
+                    className="w-full h-48 object-cover"
+                    onError={(e) => {
+                      console.error('Image failed to load:', entry.imagePath);
+                      e.target.src = 'https://via.placeholder.com/400x300?text=Image+Not+Available';
+                      e.target.alt = 'Image not available';
+                    }}
+                  />
+                ) : (
+                  <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
+                    <span className="text-gray-500">No image available</span>
+                  </div>
+                )}
                 <button
-                  onClick={() => handleDeleteEntry(entry.id)}
-                  className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                  onClick={(e) => handleDeleteEntry(entry.id, e)}
+                  className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors duration-200"
                   title="Delete analysis"
+                  aria-label="Delete analysis"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -281,7 +321,14 @@ const RefrigeratorGrid = () => {
       {entries.length === 0 && !error && (
         <div className="text-center text-gray-500 py-10 bg-white rounded-lg shadow-md">
           <p className="text-lg mb-2">No refrigerator analyses yet.</p>
-          <p className="text-sm">Start by analyzing your refrigerator contents!</p>
+          <p className="text-sm mb-6">Start by analyzing your refrigerator contents!</p>
+          <Link 
+            to="/scan" 
+            className="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          >
+            <Camera className="w-5 h-5 mr-2" />
+            Scan Refrigerator Now
+          </Link>
         </div>
       )}
     </div>

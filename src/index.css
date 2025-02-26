@@ -423,11 +423,12 @@ textarea {
   .dropdown-menu {
     position: static;
     box-shadow: none;
-    background-color: rgba(30, 64, 175, 0.7); /* Slightly transparent blue */
+    background-color: white;
     border-radius: 0.375rem;
     margin: 0.25rem 0 0.25rem 1rem;
-    border-left: 2px solid rgba(255, 255, 255, 0.6);
+    border-left: 2px solid #3b82f6;
     transition: max-height 0.3s ease, opacity 0.2s ease;
+    z-index: 30; /* Ensure proper stacking */
   }
   
   .dropdown-menu.block {
@@ -435,6 +436,7 @@ textarea {
     max-height: 500px;
     opacity: 1;
     padding: 0.25rem 0;
+    visibility: visible; /* Ensure visibility */
   }
   
   .dropdown-menu.hidden {
@@ -442,19 +444,101 @@ textarea {
     max-height: 0;
     opacity: 0;
     padding: 0;
+    visibility: hidden; /* Ensure hidden */
   }
   
   .dropdown-menu a {
-    color: white !important;
+    color: #3b82f6 !important;
     border-left: none;
     border-left: 2px solid transparent;
     padding: 0.5rem 1rem;
+    position: relative; /* Create stacking context */
+    z-index: 1;
+    display: block; /* Ensure it's a block element */
+    width: 100%; /* Full width */
   }
   
   .dropdown-menu a:hover {
-    background-color: rgba(255, 255, 255, 0.2);
-    color: white !important;
-    border-left-color: white;
+    background-color: #f3f4f6;
+    color: #1d4ed8 !important;
+    border-left-color: #3b82f6;
+  }
+  
+  /* Fix SVG pointer events */
+  .dropdown-menu a svg,
+  .dropdown-menu a svg path {
+    stroke: #3b82f6 !important;
+    pointer-events: none;
+  }
+  
+  .dropdown-menu a:hover svg,
+  .dropdown-menu a:hover svg path {
+    stroke: #1d4ed8 !important;
+  }
+  
+  /* Prevent event bubbling issues */
+  .dropdown-menu a * {
+    pointer-events: none;
+  }
+}
+
+/* Mobile navigation specific styles */
+@media (max-width: 767px) {
+  /* This ensures our styles in styles/index.css take precedence */
+  .dropdown-menu {
+    background-color: white !important;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    border-left: 2px solid #3b82f6 !important;
+    will-change: transform, opacity; /* Optimize for animations */
+    isolation: isolate; /* Create stacking context */
+    contain: content; /* Contain layout and paint operations */
+    z-index: 30; /* Ensure it's above other elements */
+  }
+  
+  /* Ensure mobile dropdown icons are blue */
+  .mobile-dropdown-icon svg,
+  .mobile-dropdown-icon svg path {
+    stroke: #3b82f6 !important;
+    pointer-events: none !important;
+  }
+  
+  /* Fix for mobile hover issues */
+  .mobile-dropdown-item {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    position: relative;
+    z-index: 1;
+    user-select: none; /* Prevent text selection */
+  }
+  
+  .mobile-dropdown-item:hover,
+  .mobile-dropdown-item:active {
+    background-color: #f3f4f6 !important;
+    color: #1d4ed8 !important;
+  }
+  
+  .mobile-dropdown-item:hover .mobile-dropdown-icon svg,
+  .mobile-dropdown-item:hover .mobile-dropdown-icon svg path,
+  .mobile-dropdown-item:active .mobile-dropdown-icon svg,
+  .mobile-dropdown-item:active .mobile-dropdown-icon svg path {
+    stroke: #1d4ed8 !important;
+  }
+  
+  /* Fix for browser extension conflicts */
+  .dropdown-menu * {
+    contain: content; /* Contain layout and paint operations */
+  }
+  
+  /* Fix for mobile menu button */
+  nav button {
+    -webkit-tap-highlight-color: transparent; /* Remove tap highlight on iOS */
+  }
+  
+  /* Fix for body when mobile menu is open */
+  body.mobile-menu-open {
+    overflow: hidden; /* Prevent scrolling when menu is open */
   }
 }
 

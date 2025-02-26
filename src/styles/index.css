@@ -174,3 +174,728 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(59, 130, 246, 0.8);
 }
+
+/* Navigation dropdown SVG icon fixes */
+.dropdown-menu svg,
+.dropdown-menu svg path {
+  stroke: white !important;
+  color: white !important;
+  fill: none !important;
+  pointer-events: none; /* Prevent SVG from capturing hover events */
+}
+
+.dropdown-menu a:hover svg,
+.dropdown-menu a:hover svg path {
+  stroke: white !important;
+  color: white !important;
+  fill: none !important;
+}
+
+/* Fix for all navigation SVG icons */
+nav svg,
+nav svg path {
+  stroke: currentColor !important;
+  pointer-events: none; /* Prevent SVG from capturing hover events */
+}
+
+nav a:hover svg,
+nav a:hover svg path,
+nav button:hover svg,
+nav button:hover svg path {
+  stroke: currentColor !important;
+}
+
+/* Force white color for navigation icons */
+.bg-blue-600 svg,
+.bg-blue-700 svg,
+.bg-blue-800 svg {
+  stroke: white !important;
+}
+
+.bg-blue-600:hover svg,
+.bg-blue-700:hover svg,
+.bg-blue-800:hover svg {
+  stroke: white !important;
+}
+
+/* Mobile navigation specific styles */
+@media (max-width: 767px) {
+  /* Mobile dropdown menu styling */
+  nav .dropdown-menu {
+    background-color: white !important;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    border-left: 2px solid #3b82f6 !important;
+    will-change: transform, opacity; /* Optimize for animations */
+    isolation: isolate; /* Create a new stacking context */
+    contain: content; /* Contain layout and paint operations */
+    z-index: 30; /* Ensure it's above other elements */
+  }
+  
+  /* Direct styling for the mobile dropdown SVG class */
+  .mobile-dropdown-svg {
+    stroke: #3b82f6 !important;
+    color: #3b82f6 !important;
+    fill: none !important;
+    pointer-events: none; /* Prevent SVG from capturing hover events */
+    width: 20px !important; /* Force a maximum width */
+    height: 20px !important; /* Force a maximum height */
+    max-width: 20px !important; /* Maximum width constraint */
+    max-height: 20px !important; /* Maximum height constraint */
+    display: inline-block !important; /* Ensure proper display */
+    vertical-align: middle !important; /* Align properly */
+  }
+  
+  .mobile-dropdown-svg path {
+    stroke: #3b82f6 !important;
+    color: #3b82f6 !important;
+    fill: none !important;
+  }
+  
+  .mobile-dropdown-icon {
+    display: inline-flex !important; /* Use flexbox for icon container */
+    align-items: center !important; /* Center vertically */
+    justify-content: center !important; /* Center horizontally */
+    width: 24px !important; /* Fixed width for the icon container */
+    height: 24px !important; /* Fixed height for the icon container */
+    margin-right: 8px !important; /* Consistent spacing */
+    flex-shrink: 0 !important; /* Prevent shrinking */
+  }
+  
+  /* Override the white stroke for mobile dropdown items */
+  nav .dropdown-menu svg,
+  nav .dropdown-menu svg path,
+  .mobile-dropdown-icon svg,
+  .mobile-dropdown-icon svg path {
+    stroke: #3b82f6 !important;
+    color: #3b82f6 !important;
+    fill: none !important;
+    pointer-events: none; /* Prevent SVG from capturing hover events */
+    width: 20px !important; /* Force width */
+    height: 20px !important; /* Force height */
+  }
+  
+  /* Extremely specific selector to override any other styles */
+  .dropdown-menu .mobile-dropdown-item .mobile-dropdown-icon svg,
+  .dropdown-menu .mobile-dropdown-item .mobile-dropdown-icon svg path,
+  nav .dropdown-menu .mobile-dropdown-item .mobile-dropdown-icon svg,
+  nav .dropdown-menu .mobile-dropdown-item .mobile-dropdown-icon svg path {
+    stroke: #3b82f6 !important;
+    color: #3b82f6 !important;
+    fill: none !important;
+    transition: stroke 0.2s ease, color 0.2s ease; /* Smooth transition for hover */
+    width: 20px !important;
+    height: 20px !important;
+  }
+  
+  /* Mobile dropdown item styling */
+  .mobile-dropdown-item {
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+    padding: 8px 16px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    color: #3b82f6 !important;
+    transition: background-color 0.2s ease, color 0.2s ease !important;
+    border-radius: 4px !important;
+    margin: 2px 0 !important;
+    user-select: none !important;
+  }
+  
+  /* Styles for when mobile menu is open */
+  body.mobile-menu-open {
+    overflow: hidden; /* Prevent scrolling when menu is open */
+  }
+  
+  body.mobile-menu-open .mobile-dropdown-icon svg,
+  body.mobile-menu-open .mobile-dropdown-icon svg path,
+  body.mobile-menu-open nav .dropdown-menu svg,
+  body.mobile-menu-open nav .dropdown-menu svg path {
+    stroke: #3b82f6 !important;
+    color: #3b82f6 !important;
+    fill: none !important;
+    width: 20px !important;
+    height: 20px !important;
+  }
+  
+  nav .dropdown-menu a,
+  .mobile-dropdown-item {
+    color: #3b82f6 !important;
+    background-color: white !important;
+    position: relative; /* Create a new stacking context */
+    z-index: 1; /* Ensure proper stacking */
+    transition: background-color 0.2s ease, color 0.2s ease; /* Smooth transition for hover */
+    display: flex !important; /* Use flexbox */
+    align-items: center !important; /* Center items vertically */
+    width: 100%; /* Full width */
+    text-align: left; /* Left-aligned text */
+  }
+  
+  nav .dropdown-menu a:hover,
+  .mobile-dropdown-item:hover {
+    background-color: #f3f4f6 !important;
+    color: #1d4ed8 !important;
+  }
+  
+  nav .dropdown-menu a:hover svg,
+  nav .dropdown-menu a:hover svg path,
+  .mobile-dropdown-item:hover .mobile-dropdown-icon svg,
+  .mobile-dropdown-item:hover .mobile-dropdown-icon svg path {
+    stroke: #1d4ed8 !important;
+    color: #1d4ed8 !important;
+    width: 20px !important;
+    height: 20px !important;
+  }
+  
+  /* Fix for touch events on mobile */
+  .mobile-dropdown-item {
+    touch-action: manipulation; /* Optimize for touch */
+    -webkit-tap-highlight-color: transparent; /* Remove tap highlight on iOS */
+    user-select: none; /* Prevent text selection */
+  }
+  
+  /* Ensure parent elements don't interfere with hover */
+  .dropdown-menu {
+    isolation: isolate; /* Create a new stacking context */
+  }
+  
+  /* Fix for mobile menu button */
+  nav button {
+    -webkit-tap-highlight-color: transparent; /* Remove tap highlight on iOS */
+  }
+
+  /* Additional mobile dropdown menu fixes */
+  /* Dropdown container */
+  .dropdown-menu {
+    padding: 8px !important; 
+    margin-top: 4px !important;
+    margin-bottom: 4px !important;
+    max-height: 300px !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important; /* Smooth scrolling on iOS */
+    transform: translateZ(0) !important; /* Force hardware acceleration */
+    width: calc(100% - 32px) !important; /* Full width minus padding */
+    border-radius: 8px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  }
+  
+  /* Ensure SVGs have the correct size within mobile nav */
+  nav svg {
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    min-height: 20px !important;
+    max-width: 20px !important;
+    max-height: 20px !important;
+  }
+  
+  /* Fix for multi-level children */
+  .dropdown-menu .mobile-dropdown-item {
+    border-radius: 6px !important;
+    padding: 10px 12px !important;
+    background-color: white !important;
+    margin-bottom: 4px !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+  
+  /* Force correct icon size in mobile dropdown */
+  .dropdown-menu .mobile-dropdown-item .mobile-dropdown-icon svg {
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    min-height: 20px !important;
+    max-width: 20px !important;
+    max-height: 20px !important;
+    display: block !important;
+  }
+  
+  /* Improve touch areas for mobile */
+  .mobile-dropdown-item {
+    position: relative !important;
+    min-height: 44px !important; /* iOS recommended touch target size */
+  }
+  
+  /* Fix hover state styling */
+  .mobile-dropdown-item[data-hovered="true"],
+  .mobile-dropdown-item:hover,
+  .mobile-dropdown-item:active {
+    background-color: #f3f4f6 !important;
+    color: #1d4ed8 !important;
+  }
+  
+  /* Fix mobile button styling */
+  nav button {
+    padding: 10px !important;
+    min-height: 44px !important; /* iOS recommended touch target size */
+  }
+  
+  /* Fix for Plan dropdown component styling in particular */
+  nav .dropdown-menu[id^="dropdown-"][id$="-6"] .mobile-dropdown-item .mobile-dropdown-icon svg,
+  nav .dropdown-menu[id^="dropdown-"][id$="-7"] .mobile-dropdown-item .mobile-dropdown-icon svg,
+  nav .dropdown-menu[id^="dropdown-"][id$="-8"] .mobile-dropdown-item .mobile-dropdown-icon svg {
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    min-height: 20px !important;
+    max-width: 20px !important;
+    max-height: 20px !important;
+  }
+  
+  /* Fix button colors for Track, Kitchen, Plan */
+  .nav-item {
+    position: relative;
+    z-index: 1;
+  }
+  
+  /* Specific styling for the track/kitchen/plan buttons in mobile menu */
+  .nav-item[aria-controls^="dropdown"] {
+    background-color: white !important;
+    color: #2563eb !important;
+    border: 1px solid #e5e7eb !important;
+    margin-bottom: 4px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  /* Specific styling for the track/kitchen/plan buttons when active/expanded */
+  .nav-item[aria-expanded="true"] {
+    background-color: #f3f4f6 !important;
+    border-color: #2563eb !important;
+  }
+  
+  /* Make the close button visible on white background */
+  .md\\:hidden button[aria-label="Close menu"] {
+    background-color: #2563eb !important;
+    color: white !important;
+    border-radius: 4px !important;
+  }
+  
+  /* Fix SVG colors in mobile menu buttons */
+  .nav-item[aria-controls^="dropdown"] svg,
+  .nav-item[aria-controls^="dropdown"] svg path {
+    stroke: #2563eb !important;
+    color: #2563eb !important;
+  }
+  
+  /* Fix for dropdown hover effects */
+  .nav-item:hover {
+    background-color: #2563eb !important;
+    color: white !important;
+  }
+  
+  .nav-item:hover svg,
+  .nav-item:hover svg path {
+    stroke: white !important;
+    color: white !important;
+  }
+  
+  /* Make logout button stand out in mobile */
+  .nav-item.bg-red-600 {
+    margin-top: 12px !important;
+    background-color: #dc2626 !important;
+    color: white !important;
+    border: none !important;
+  }
+  
+  /* Fix mobile menu colors for overall menu */
+  .md\\:hidden .bg-blue-600 {
+    background-color: #ffffff !important;
+    border-top: 1px solid #e5e7eb !important;
+  }
+
+  /* Additional mobile menu fixes */
+  /* Fix mobile navigation background and border */
+  .mobile-nav-container {
+    background-color: #f9fafb !important;
+    border-top: 1px solid #e5e7eb !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+  }
+  
+  /* Make food gallery, profile, admin dashboard, etc. buttons stand out */
+  .mobile-nav-container .nav-item:not([aria-controls]) {
+    background-color: white !important;
+    border: 1px solid #e5e7eb !important;
+    color: #2563eb !important;
+    margin-bottom: 4px !important;
+  }
+  
+  /* Special cases for certain menu items */
+  .mobile-nav-container .nav-item:not([aria-controls])[href="/profile"],
+  .mobile-nav-container .nav-item:not([aria-controls])[href="/admin-dashboard"],
+  .mobile-nav-container .nav-item:not([aria-controls])[href="/waitlist"] {
+    background-color: #2563eb !important;
+    color: white !important;
+    border: none !important;
+  }
+  
+  /* Style close button properly */
+  button[aria-label="Close menu"] svg {
+    color: white !important;
+    stroke: white !important;
+  }
+  
+  /* Fix hover states for all items */
+  .mobile-nav-container .nav-item:hover {
+    background-color: #2563eb !important;
+    color: white !important;
+  }
+  
+  .mobile-nav-container .nav-item:hover svg {
+    stroke: white !important;
+    color: white !important;
+  }
+  
+  /* Make dropdown containers more distinct */
+  .dropdown-menu {
+    margin-left: 8px !important;
+    margin-right: 8px !important;
+    padding: 4px !important;
+    border-radius: 8px !important;
+    background-color: white !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+  }
+
+  /* Mobile navigation overrides to ensure blue background with white text */
+  .mobile-nav-container button,
+  .mobile-nav-container a {
+    background-color: #2563eb !important;
+    color: white !important;
+    border: none !important;
+    margin-bottom: 4px !important;
+  }
+
+  /* Keep logout button red */
+  .mobile-nav-container button.bg-red-600 {
+    background-color: #dc2626 !important;
+  }
+
+  /* Make SVG icons white */
+  .mobile-nav-container button svg,
+  .mobile-nav-container a svg,
+  .mobile-nav-container button svg path,
+  .mobile-nav-container a svg path {
+    stroke: white !important;
+    color: white !important;
+  }
+
+  /* Override mobile dropdown item colors */
+  .mobile-dropdown-item {
+    background-color: white !important;
+    color: #3b82f6 !important;
+  }
+
+  /* Fix for mobile dropdown SVG colors */
+  .mobile-dropdown-icon svg,
+  .mobile-dropdown-icon svg path {
+    stroke: #3b82f6 !important;
+    color: #3b82f6 !important;
+  }
+
+  /* Fix for hover states */
+  .mobile-nav-container button:hover,
+  .mobile-nav-container a:hover {
+    background-color: #1d4ed8 !important;
+  }
+
+  /* Override any previous styles for Track, Kitchen, Plan buttons */
+  .nav-item[aria-controls^="dropdown"] {
+    background-color: #2563eb !important;
+    color: white !important;
+  }
+
+  /* Fix for Track, Kitchen, Plan button icons */
+  .nav-item[aria-controls^="dropdown"] svg,
+  .nav-item[aria-controls^="dropdown"] svg path {
+    stroke: white !important;
+    color: white !important;
+  }
+
+  /* Keep correct styling for hamburger menu button */
+  button[aria-label="Open menu"],
+  button[aria-label="Close menu"] {
+    background-color: #2563eb !important;
+    color: white !important;
+  }
+  
+  button[aria-label="Open menu"] svg,
+  button[aria-label="Close menu"] svg {
+    stroke: white !important;
+    color: white !important;
+  }
+}
+
+/* Global critical overrides - these will take precedence over all other styles */
+.mobile-hamburger {
+  background-color: #2563eb !important;
+  color: white !important;
+}
+
+.mobile-hamburger svg {
+  color: white !important;
+  stroke: white !important;
+  fill: none !important;
+}
+
+/* Force all nav items to be blue with white text in mobile view */
+@media (max-width: 767px) {
+  nav .nav-item,
+  nav [class*="bg-blue"],
+  nav button:not(.mobile-dropdown-item):not([data-hovered]),
+  nav .mobile-nav-container button:not(.mobile-dropdown-item):not([data-hovered]),
+  nav .mobile-nav-container a:not(.mobile-dropdown-item):not([data-hovered]) {
+    background-color: #2563eb !important;
+    color: white !important;
+    border: none !important;
+  }
+  
+  nav button svg,
+  nav .nav-item svg {
+    color: white !important;
+    stroke: white !important;
+    fill: none !important;
+  }
+  
+  /* Make sure the mobile dropdown items stay with blue text on white background */
+  nav .mobile-dropdown-item,
+  nav [data-hovered] {
+    background-color: white !important;
+    color: #3b82f6 !important;
+  }
+  
+  nav .mobile-dropdown-item svg,
+  nav [data-hovered] svg {
+    color: #3b82f6 !important;
+    stroke: #3b82f6 !important;
+    fill: none !important;
+  }
+}
+
+/* Desktop navigation specific styles - will only apply to non-mobile screens */
+@media (min-width: 768px) {
+  /* Main navigation items hover effects */
+  nav .nav-item {
+    transition: all 0.2s ease-in-out;
+    position: relative;
+  }
+  
+  nav .nav-item:hover {
+    background-color: #1d4ed8 !important;
+    color: white !important;
+    border-bottom-color: white !important;
+  }
+  
+  /* Add a subtle transition effect for the border */
+  nav .nav-item::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background-color: white;
+    transition: width 0.2s ease-in-out;
+  }
+  
+  nav .nav-item:hover::after {
+    width: 100%;
+  }
+  
+  /* Fix SVG icons on hover */
+  nav .nav-item:hover svg,
+  nav .nav-item:hover svg path {
+    stroke: white !important;
+    color: white !important;
+    fill: none !important;
+  }
+  
+  /* Desktop dropdown menu background */
+  nav .dropdown-menu {
+    background-color: #2563eb !important; /* Match base blue color */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    border: 1px solid #60a5fa !important; /* Lighter blue for border */
+    border-radius: 0.5rem !important;
+    overflow: hidden !important;
+  }
+  
+  /* Dropdown menu items in desktop view */
+  nav .dropdown-menu a {
+    color: white !important;
+    transition: background-color 0.2s ease;
+    border-radius: 0.25rem;
+    margin: 0.1rem 0;
+    display: flex !important;
+    align-items: center !important;
+  }
+  
+  nav .dropdown-menu a:hover {
+    background-color: #1e40af !important; /* Slightly darker blue */
+  }
+  
+  /* Fix active dropdown button styling */
+  nav .nav-item[aria-expanded="true"] {
+    background-color: #1d4ed8 !important;
+  }
+  
+  /* Fix for child elements within nav-items */
+  nav .nav-item span,
+  nav .nav-item div {
+    pointer-events: none;
+  }
+  
+  /* Fix for SVGs to maintain white color in dropdowns */
+  nav .dropdown-menu svg,
+  nav .dropdown-menu svg path {
+    stroke: white !important;
+    color: white !important;
+    fill: none !important;
+  }
+  
+  /* Ensure logout button remains red */
+  nav button.bg-red-600,
+  nav button.bg-red-600:hover {
+    background-color: #dc2626 !important;
+    color: white !important;
+  }
+  
+  nav button.bg-red-600:hover {
+    background-color: #b91c1c !important; /* Slightly darker red */
+  }
+  
+  /* Ensure proper styling for the dropdown chevron */
+  nav .nav-item .h-4.w-4 {
+    transition: transform 0.2s ease-in-out;
+  }
+  
+  nav .nav-item:hover .h-4.w-4 {
+    color: white !important;
+  }
+
+  /* Ensure parent nav items have proper hover styling */
+  nav button.bg-blue-600:hover,
+  nav a.bg-blue-600:hover {
+    background-color: #1d4ed8 !important;
+  }
+}
+
+/* Desktop navigation bar specific styles - applied at all screen sizes */
+nav.bg-blue-600 {
+  background-color: #2563eb !important; /* Consistent blue color */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Desktop navigation specific styles - will only apply to non-mobile screens */
+@media (min-width: 768px) {
+  /* Set consistent colors for all navigation buttons */
+  nav button, 
+  nav a.nav-item,
+  nav .bg-blue-600 {
+    background-color: #2563eb !important;
+    color: white !important;
+  }
+  
+  /* Main navigation items hover effects */
+  nav .nav-item {
+    transition: all 0.2s ease-in-out;
+    position: relative;
+  }
+  
+  nav .nav-item:hover {
+    background-color: #1d4ed8 !important;
+    color: white !important;
+    border-bottom-color: white !important;
+  }
+  
+  /* Add a subtle transition effect for the border */
+  nav .nav-item::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background-color: white;
+    transition: width 0.2s ease-in-out;
+  }
+  
+  nav .nav-item:hover::after {
+    width: 100%;
+  }
+  
+  /* Fix SVG icons on hover */
+  nav .nav-item:hover svg,
+  nav .nav-item:hover svg path {
+    stroke: white !important;
+    color: white !important;
+    fill: none !important;
+  }
+  
+  /* Desktop dropdown menu background */
+  nav .dropdown-menu {
+    background-color: #2563eb !important; /* Match base blue color */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    border: 1px solid #60a5fa !important; /* Lighter blue for border */
+    border-radius: 0.5rem !important;
+    overflow: hidden !important;
+  }
+  
+  /* Dropdown menu items in desktop view */
+  nav .dropdown-menu a {
+    color: white !important;
+    transition: background-color 0.2s ease;
+    border-radius: 0.25rem;
+    margin: 0.1rem 0;
+    display: flex !important;
+    align-items: center !important;
+  }
+  
+  nav .dropdown-menu a:hover {
+    background-color: #1e40af !important; /* Slightly darker blue */
+  }
+  
+  /* Fix active dropdown button styling */
+  nav .nav-item[aria-expanded="true"] {
+    background-color: #1d4ed8 !important;
+  }
+  
+  /* Fix for child elements within nav-items */
+  nav .nav-item span,
+  nav .nav-item div {
+    pointer-events: none;
+  }
+  
+  /* Fix for SVGs to maintain white color in dropdowns */
+  nav .dropdown-menu svg,
+  nav .dropdown-menu svg path {
+    stroke: white !important;
+    color: white !important;
+    fill: none !important;
+  }
+  
+  /* Ensure logout button remains red */
+  nav button.bg-red-600,
+  nav button.bg-red-600:hover {
+    background-color: #dc2626 !important;
+    color: white !important;
+  }
+  
+  nav button.bg-red-600:hover {
+    background-color: #b91c1c !important; /* Slightly darker red */
+  }
+  
+  /* Ensure proper styling for the dropdown chevron */
+  nav .nav-item .h-4.w-4 {
+    transition: transform 0.2s ease-in-out;
+  }
+  
+  nav .nav-item:hover .h-4.w-4 {
+    color: white !important;
+  }
+
+  /* Ensure parent nav items have proper hover styling */
+  nav button.bg-blue-600:hover,
+  nav a.bg-blue-600:hover {
+    background-color: #1d4ed8 !important;
+  }
+}
