@@ -5,8 +5,40 @@ rules_version = '2';
 //    /databases/(default)/documents/users/$(request.auth.uid)).data.isAdmin;
 service firebase.storage {
   match /b/{bucket}/o {
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return request.auth.uid == 'zFl7YxQw6CaP4ZJPthcvgGq2Rld2';
+    }
+    
+    function isApprovedUser() {
+      return isSignedIn() && 
+        (isAdmin() || request.auth.token.approved == true);
+    }
+    
+    // Global admin access
     match /{allPaths=**} {
-      allow read, write: if false;
+      allow read, write: if isAdmin();
+    }
+    
+    // User-specific files
+    match /users/{userId}/{allPaths=**} {
+      allow read, write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+    }
+    
+    // Food entries images
+    match /foodEntries/{entryId} {
+      allow read: if isApprovedUser();
+      allow write: if isSignedIn() && (request.resource.metadata.userId == request.auth.uid || isAdmin());
+    }
+    
+    // Public files
+    match /public/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
   }
 }

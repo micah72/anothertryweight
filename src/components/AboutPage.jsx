@@ -4,28 +4,29 @@ const AboutPage = () => {
   return (
     <div className="container mx-auto px-4 py-12">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">About Us</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-6">About SnapMeal AI</h1>
         
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Our Mission</h2>
           <p className="text-gray-600 mb-6">
-            We're dedicated to helping people achieve their health and fitness goals through better nutrition tracking and meal planning. 
-            Our platform combines cutting-edge technology with nutritional science to provide personalized recommendations and insights.
+            We're dedicated to transforming the way people manage their diet through the power of photography and artificial intelligence. 
+            SnapMeal AI combines cutting-edge technology with nutritional science to provide personalized meal planning, inventory tracking, and dietary insights.
           </p>
           
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Our Story</h2>
           <p className="text-gray-600 mb-6">
-            Founded in 2025, our team of nutritionists, fitness experts, and software engineers came together with a shared vision: 
+            Founded in 2025, our team of nutritionists, AI specialists, and software engineers came together with a shared vision: 
             to make healthy eating accessible, enjoyable, and sustainable for everyone. We recognized that many people struggle with 
-            maintaining healthy eating habits due to lack of time, knowledge, or resources. That's why we created this platform - 
-            to simplify nutrition tracking and make it easier for people to make healthier food choices.
+            maintaining healthy eating habits and keeping track of their food inventory. That's why we created SnapMeal AI - 
+            to simplify nutrition tracking and meal planning through the simple act of taking photos of your food.
           </p>
           
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Our Approach</h2>
           <p className="text-gray-600">
-            We believe that healthy eating should be personalized to your unique needs and preferences. Our platform uses advanced 
-            algorithms to analyze your dietary patterns, preferences, and goals to provide tailored recommendations. We focus on 
-            sustainable habits rather than quick fixes, helping you build a healthier relationship with food for the long term.
+            We believe that healthy eating should be personalized to your unique needs and preferences. SnapMeal AI uses advanced 
+            computer vision and machine learning algorithms to analyze your meals, track your inventory, and understand your dietary patterns. 
+            Our platform provides tailored recipe suggestions based on what's in your refrigerator and helps you build a 
+            visually engaging food journal that makes healthy eating both fun and sustainable.
           </p>
         </div>
         
@@ -40,7 +41,7 @@ const AboutPage = () => {
             <div className="flex flex-col items-center">
               <div className="w-32 h-32 bg-gray-200 rounded-full mb-4"></div>
               <h3 className="font-medium text-gray-900">John Smith</h3>
-              <p className="text-gray-500">Head of Nutrition</p>
+              <p className="text-gray-500">Head of AI & Nutrition</p>
             </div>
           </div>
         </div>

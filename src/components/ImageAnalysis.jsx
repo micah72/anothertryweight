@@ -5,6 +5,7 @@ import OpenAIService from '../services/openaiService';
 import dbService from '../firebase/dbService';
 import LoadingSpinner from './LoadingSpinner';
 import CameraComponent from './Camera';
+import { useNavigate } from 'react-router-dom';
 
 const ErrorAlert = ({ children }) => (
   <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4 rounded">
@@ -62,6 +63,7 @@ const ImageAnalysis = () => {
   const [error, setError] = useState(null);
   const [showCamera, setShowCamera] = useState(false);
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const openaiService = new OpenAIService();
 
@@ -129,38 +131,57 @@ const ImageAnalysis = () => {
     try {
       console.log('Analyzing image...');
       
-      // Send the full image data URL
-      const result = await openaiService.analyzeImage(selectedImage);
+      // Make sure we're sending the image in the correct format
+      const imageToSend = selectedImage.startsWith('data:') 
+        ? selectedImage 
+        : `data:image/jpeg;base64,${selectedImage}`;
+      
+      const result = await openaiService.analyzeImage(imageToSend);
 
       if (result.error) {
         throw new Error('Failed to analyze image content');
       }
 
-      await dbService.addFoodEntry(user.uid, {
-        imagePath: selectedImage,
-        foodName: result.foodName,
-        calories: result.calories || 0,
-        healthScore: result.healthScore || 0,
-        analysisData: JSON.stringify(result),
-        type: 'food'
-      });
+      // Save the analysis to Firebase
+      try {
+        await dbService.addFoodEntry(user.uid, {
+          imagePath: selectedImage,
+          foodName: result.foodName,
+          calories: result.calories || 0,
+          healthScore: result.healthScore || 0,
+          analysisData: JSON.stringify(result),
+          type: 'food',
+          created_at: new Date()
+        });
+      } catch (dbError) {
+        console.error('Error saving to database:', dbError);
+        // Continue with the analysis even if saving fails
+      }
 
       setAnalysis(result);
     } catch (error) {
       console.error('Analysis error:', error);
       
-      if (error.message.includes('quota')) {
-        setError('API quota exceeded. Please try again later.');
-      } else if (error.message.includes('content_policy')) {
-        setError('Image could not be analyzed. Please try a different image.');
-      } else if (error.message.includes('API_NOT_CONFIGURED')) {
-        setError('OpenAI API is not properly configured.');
+      if (error.message.includes('quota') || error.message.includes('exceeded')) {
+        setError('API quota exceeded. Please try again later or check your billing details.');
+      } else if (error.message.includes('content_policy') || error.message.includes('policy')) {
+        setError('Image could not be analyzed due to content policy restrictions. Please try a different image.');
+      } else if (error.message.includes('API_NOT_CONFIGURED') || error.message.includes('configured')) {
+        setError('OpenAI API is not properly configured. Please check your API key settings.');
+      } else if (error.message.includes('Invalid API key')) {
+        setError('Invalid OpenAI API key. Please check your API key settings.');
       } else {
-        setError('Failed to analyze image. Please try again.');
+        setError(`Failed to analyze image: ${error.message || 'Unknown error'}`);
       }
     } finally {
       setLoading(false);
     }
+  };
+
+  const saveToGalleryAndRedirect = () => {
+    // Analysis is already saved to the database during analyzeImage
+    // Just navigate to the gallery
+    navigate('/gallery');
   };
 
   const resetAnalysis = () => {
@@ -250,53 +271,47 @@ const ImageAnalysis = () => {
       )}
 
       {analysis && (
-        <div className="card-base space-y-4">
-          <h3 className="text-xl font-semibold">Analysis Results</h3>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-gray-500">Food Name</p>
-              <p className="font-semibold">{analysis.foodName}</p>
-            </div>
+        <div className="mt-6">
+          <div className="card-base p-6">
+            <h3 className="text-xl font-semibold mb-4">{analysis.foodName}</h3>
             
-            <div>
-              <p className="text-sm text-gray-500">Calories</p>
-              <p className="font-semibold">{analysis.calories} kcal</p>
-            </div>
-            
-            <div>
-              <p className="text-sm text-gray-500">Health Score</p>
-              <div className="flex items-center">
-                <p className="font-semibold">{analysis.healthScore}/10</p>
-                <div 
-                  className="ml-2 h-2 w-24 bg-gray-200 rounded-full overflow-hidden"
-                >
-                  <div 
-                    className="h-full bg-primary rounded-full"
-                    style={{ width: `${(analysis.healthScore / 10) * 100}%` }}
-                  />
-                </div>
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="bg-blue-50 p-3 rounded-lg">
+                <p className="text-sm text-gray-500">Calories</p>
+                <p className="text-xl font-bold text-blue-600">{analysis.calories}</p>
+              </div>
+              <div className="bg-green-50 p-3 rounded-lg">
+                <p className="text-sm text-gray-500">Health Score</p>
+                <p className="text-xl font-bold text-green-600">{analysis.healthScore}/10</p>
               </div>
             </div>
+            
+            <div className="mb-4">
+              <h4 className="font-medium text-gray-700 mb-1">Benefits</h4>
+              <p className="text-gray-600">{analysis.benefits}</p>
+            </div>
+            
+            <div className="mb-6">
+              <h4 className="font-medium text-gray-700 mb-1">Concerns</h4>
+              <p className="text-gray-600">{analysis.concerns}</p>
+            </div>
+            
+            <div className="flex justify-between">
+              <button
+                onClick={resetAnalysis}
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              >
+                Analyze Another
+              </button>
+              
+              <button
+                onClick={saveToGalleryAndRedirect}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                View in Gallery
+              </button>
+            </div>
           </div>
-          
-          {analysis.benefits && (
-            <div>
-              <p className="text-sm text-gray-500">Nutritional Benefits</p>
-              <p className="text-gray-700 bg-green-50 p-3 rounded-lg">
-                {analysis.benefits}
-              </p>
-            </div>
-          )}
-          
-          {analysis.concerns && (
-            <div>
-              <p className="text-sm text-gray-500">Health Concerns</p>
-              <p className="text-gray-700 bg-yellow-50 p-3 rounded-lg">
-                {analysis.concerns}
-              </p>
-            </div>
-          )}
         </div>
       )}
     </div>

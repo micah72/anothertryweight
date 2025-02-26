@@ -129,7 +129,7 @@ class OpenAIService {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: "gpt-4o",
+          model: "gpt-4o-mini",
           messages: [
             {
               role: "system",
@@ -148,7 +148,7 @@ class OpenAIService {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error('OpenAI API Error Response:', errorData);
-        throw new Error(this.handleAPIError(response.status));
+        throw new Error(this.handleAPIError(response.status, errorData));
       }
 
       const data = await response.json();
@@ -181,7 +181,7 @@ class OpenAIService {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: "gpt-4o",
+          model: "gpt-4o-mini",
           messages: [
             {
               role: "user",
@@ -209,7 +209,7 @@ class OpenAIService {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error('OpenAI API Error Response:', errorData);
-        throw new Error(this.handleAPIError(response.status));
+        throw new Error(this.handleAPIError(response.status, errorData));
       }
 
       const data = await response.json();
@@ -248,7 +248,7 @@ class OpenAIService {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: "gpt-4o",
+          model: "gpt-4o-mini",
           messages: [
             {
               role: "user",
@@ -276,7 +276,7 @@ class OpenAIService {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error('OpenAI API Error Response:', errorData);
-        throw new Error(this.handleAPIError(response.status));
+        throw new Error(this.handleAPIError(response.status, errorData));
       }
 
       const data = await response.json();
@@ -447,7 +447,27 @@ Please provide recommendations in the following JSON format:
     );
   }
 
-  handleAPIError(status) {
+  handleAPIError(status, errorData = {}) {
+    // Check for specific OpenAI error codes
+    if (errorData.error) {
+      if (errorData.error.code === 'content_policy_violation') {
+        return 'The image could not be analyzed due to content policy restrictions.';
+      }
+      
+      if (errorData.error.code === 'rate_limit_exceeded') {
+        return 'API rate limit exceeded. Please try again later.';
+      }
+      
+      if (errorData.error.code === 'insufficient_quota') {
+        return 'Your OpenAI API quota has been exceeded. Please check your billing details.';
+      }
+      
+      if (errorData.error.message) {
+        return `OpenAI API error: ${errorData.error.message}`;
+      }
+    }
+    
+    // Fall back to status code based errors
     switch (status) {
       case 401:
         return 'Invalid API key. Please check your OpenAI API key.';

@@ -256,7 +256,7 @@ const Navigation = () => {
         <div className="flex justify-between h-16">
           <div className="flex-shrink-0 flex items-center">
             <Link to="/" className="text-white text-xl font-bold">
-              WeightLift
+              SnapMeal AI
             </Link>
             {isLoggedIn && isAdmin && (
               <span className="ml-2 bg-yellow-400 text-blue-800 text-xs px-2 py-1 rounded-full font-semibold">

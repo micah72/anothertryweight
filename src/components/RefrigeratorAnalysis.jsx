@@ -5,6 +5,7 @@ import OpenAIService from '../services/openaiService';
 import dbService from '../firebase/dbService';
 import LoadingSpinner from './LoadingSpinner';
 import CameraComponent from './Camera';
+import { useNavigate } from 'react-router-dom';
 
 const ErrorAlert = ({ children }) => (
   <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4 rounded">
@@ -62,6 +63,7 @@ const RefrigeratorAnalysis = () => {
   const [error, setError] = useState(null);
   const [showCamera, setShowCamera] = useState(false);
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const openaiService = new OpenAIService();
 
@@ -127,11 +129,14 @@ const RefrigeratorAnalysis = () => {
     setError(null);
 
     try {
-      const base64Image = selectedImage.split(',')[1];
+      // Make sure we're sending the image in the correct format
+      const imageToSend = selectedImage.startsWith('data:') 
+        ? selectedImage 
+        : `data:image/jpeg;base64,${selectedImage}`;
+      
       console.log('Analyzing refrigerator image...');
-      console.log('Image size (bytes):', Math.round(base64Image.length * 0.75));
 
-      const result = await openaiService.analyzeRefrigeratorImage(base64Image);
+      const result = await openaiService.analyzeRefrigeratorImage(imageToSend);
 
       if (result.error) {
         throw new Error('Failed to analyze refrigerator content');
@@ -153,23 +158,37 @@ const RefrigeratorAnalysis = () => {
       };
 
       // Save to database with the complete entry object
-      await dbService.addFoodEntry(user.uid, entry);
+      try {
+        await dbService.addFoodEntry(user.uid, entry);
+      } catch (dbError) {
+        console.error('Error saving to database:', dbError);
+        // Continue with the analysis even if saving fails
+      }
+      
       setAnalysis(result);
     } catch (error) {
       console.error('Analysis error:', error);
       
-      if (error.message.includes('quota')) {
-        setError('API quota exceeded. Please try again later.');
-      } else if (error.message.includes('content_policy')) {
-        setError('Image could not be analyzed. Please try a different image.');
-      } else if (error.message.includes('API_NOT_CONFIGURED')) {
-        setError('OpenAI API is not properly configured.');
+      if (error.message.includes('quota') || error.message.includes('exceeded')) {
+        setError('API quota exceeded. Please try again later or check your billing details.');
+      } else if (error.message.includes('content_policy') || error.message.includes('policy')) {
+        setError('Image could not be analyzed due to content policy restrictions. Please try a different image.');
+      } else if (error.message.includes('API_NOT_CONFIGURED') || error.message.includes('configured')) {
+        setError('OpenAI API is not properly configured. Please check your API key settings.');
+      } else if (error.message.includes('Invalid API key')) {
+        setError('Invalid OpenAI API key. Please check your API key settings.');
       } else {
-        setError('Failed to analyze refrigerator contents. Please try again.');
+        setError(`Failed to analyze refrigerator contents: ${error.message || 'Unknown error'}`);
       }
     } finally {
       setLoading(false);
     }
+  };
+
+  const saveToGalleryAndRedirect = () => {
+    // Analysis is already saved to the database during analyzeImage
+    // Just navigate to the gallery
+    navigate('/gallery');
   };
 
   const resetAnalysis = () => {
@@ -259,72 +278,73 @@ const RefrigeratorAnalysis = () => {
       )}
 
       {analysis && (
-        <div className="card-base space-y-4">
-          <h3 className="text-xl font-semibold">Analysis Results</h3>
-
-          {/* Available Items */}
-          <div>
-            <h4 className="text-sm font-medium text-gray-700">Available Items:</h4>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {analysis.items.map((item, index) => (
-                <span
-                  key={index}
-                  className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-sm"
-                >
-                  {item}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* Expiring Items */}
-          {analysis.expiringItems?.length > 0 && (
-            <div>
-              <h4 className="text-sm font-medium text-gray-700">Items to Use Soon:</h4>
-              <div className="space-y-2 mt-2">
-                {analysis.expiringItems.map((item, index) => (
-                  <div
-                    key={index}
-                    className="bg-yellow-50 text-yellow-700 px-3 py-2 rounded"
-                  >
-                    {item}
-                  </div>
-                ))}
+        <div className="mt-6">
+          <div className="card-base p-6">
+            <h3 className="text-xl font-semibold mb-4">Refrigerator Analysis</h3>
+            
+            {analysis.items.length > 0 && (
+              <div className="mb-4">
+                <h4 className="font-medium text-gray-700 mb-2">Items Detected</h4>
+                <div className="flex flex-wrap gap-2">
+                  {analysis.items.map((item, index) => (
+                    <span key={index} className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm">
+                      {item}
+                    </span>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-
-          {/* Suggested Recipes */}
-          {analysis.suggestedRecipes?.length > 0 && (
-            <div>
-              <h4 className="text-sm font-medium text-gray-700">Suggested Recipes:</h4>
-              <div className="space-y-3 mt-2">
-                {analysis.suggestedRecipes.map((recipe, index) => (
-                  <div
-                    key={index}
-                    className="bg-green-50 p-3 rounded"
-                  >
-                    <p className="font-medium text-green-800">{recipe.name}</p>
-                    {recipe.description && (
-                      <p className="text-sm text-green-600 mt-1">{recipe.description}</p>
-                    )}
-                    {recipe.ingredients && recipe.ingredients.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
+            )}
+            
+            {analysis.expiringItems.length > 0 && (
+              <div className="mb-4">
+                <h4 className="font-medium text-gray-700 mb-2">Items to Use Soon</h4>
+                <div className="flex flex-wrap gap-2">
+                  {analysis.expiringItems.map((item, index) => (
+                    <span key={index} className="bg-yellow-50 text-yellow-700 px-3 py-1 rounded-full text-sm">
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {analysis.suggestedRecipes.length > 0 && (
+              <div className="mb-6">
+                <h4 className="font-medium text-gray-700 mb-2">Suggested Recipes</h4>
+                <div className="space-y-3">
+                  {analysis.suggestedRecipes.map((recipe, index) => (
+                    <div key={index} className="bg-gray-50 p-3 rounded-lg">
+                      <h5 className="font-medium text-gray-800">{recipe.name}</h5>
+                      <p className="text-sm text-gray-600 mb-2">{recipe.description}</p>
+                      <div className="flex flex-wrap gap-1">
                         {recipe.ingredients.map((ingredient, idx) => (
-                          <span
-                            key={idx}
-                            className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs"
-                          >
+                          <span key={idx} className="bg-green-50 text-green-700 px-2 py-0.5 rounded text-xs">
                             {ingredient}
                           </span>
                         ))}
                       </div>
-                    )}
-                  </div>
-                ))}
+                    </div>
+                  ))}
+                </div>
               </div>
+            )}
+            
+            <div className="flex justify-between">
+              <button
+                onClick={resetAnalysis}
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              >
+                Analyze Another
+              </button>
+              
+              <button
+                onClick={saveToGalleryAndRedirect}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                View in Gallery
+              </button>
             </div>
-          )}
+          </div>
         </div>
       )}
     </div>
