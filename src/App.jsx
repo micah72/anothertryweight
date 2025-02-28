@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
@@ -7,6 +7,7 @@ import Navigation from './components/Navigation';
 import LoadingSpinner from './components/LoadingSpinner';
 import AdminRoute from './components/AdminRoute';
 import ApprovedUserRoute from './components/ApprovedUserRoute';
+import MetaTags from './components/MetaTags';
 
 // Lazy load all other components
 const LandingPage = lazy(() => import('./components/LandingPage'));
@@ -28,6 +29,8 @@ const ContactPage = lazy(() => import('./components/ContactPage'));
 
 // CSS
 import './App.css';
+import './styles/browser-compatibility.css';
+import './styles/global.css';
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -39,9 +42,69 @@ const LoadingFallback = () => (
 
 function AppContent() {
   const { user, isAdmin, isApproved } = useAuth();
+  const [orientation, setOrientation] = useState(window.innerWidth > window.innerHeight ? 'landscape' : 'portrait');
+  
+  // Detect browser and device type
+  useEffect(() => {
+    // Add class to body based on browser detection
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    if (isSafari) {
+      document.body.classList.add('safari');
+    }
+    
+    // Add class for iPad detection
+    const isIPad = /iPad/i.test(navigator.userAgent) || 
+      (navigator.maxTouchPoints && 
+       navigator.maxTouchPoints > 2 && 
+       /MacIntel/.test(navigator.platform));
+    if (isIPad) {
+      document.body.classList.add('ipad');
+      
+      // Add orientation class
+      document.body.classList.add(orientation === 'landscape' ? 'ipad-landscape' : 'ipad-portrait');
+    }
+    
+    // Fix for iOS vh units (viewport height) issue
+    const setVhProperty = () => {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+    
+    // Handle orientation changes
+    const handleResize = () => {
+      setVhProperty();
+      
+      const newOrientation = window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
+      if (orientation !== newOrientation) {
+        setOrientation(newOrientation);
+        
+        if (isIPad) {
+          document.body.classList.remove('ipad-landscape', 'ipad-portrait');
+          document.body.classList.add(newOrientation === 'landscape' ? 'ipad-landscape' : 'ipad-portrait');
+        }
+      }
+    };
+    
+    setVhProperty();
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+    
+    // Fix for Safari scrolling issues
+    if (isSafari || isIPad) {
+      document.documentElement.style.height = '100%';
+      document.body.style.height = '100%';
+      document.body.style.overscrollBehavior = 'none';
+    }
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, [orientation]);
 
   return (
-    <div className="flex flex-col min-h-screen w-full">
+    <div className={`flex flex-col min-h-screen w-full ${orientation === 'landscape' ? 'ipad-pro-landscape-fix' : 'ipad-pro-portrait-fix'}`}>
+      <MetaTags />
       <Navigation />
       
       <main className="flex-grow w-full">

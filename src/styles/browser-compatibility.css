@@ -1,0 +1,173 @@
+/* Safari and iPad Compatibility Styles */
+
+/* Fix for Safari flexbox issues */
+@supports (-webkit-touch-callout: none) {
+  .flex {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+  }
+
+  .flex-col {
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: column;
+    flex-direction: column;
+  }
+
+  .items-center {
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    align-items: center;
+  }
+
+  .justify-between {
+    -webkit-box-pack: justify;
+    -webkit-justify-content: space-between;
+    justify-content: space-between;
+  }
+
+  .justify-center {
+    -webkit-box-pack: center;
+    -webkit-justify-content: center;
+    justify-content: center;
+  }
+}
+
+/* Fix for Safari grid issues */
+@supports (-webkit-touch-callout: none) {
+  .grid {
+    display: -webkit-grid;
+    display: grid;
+  }
+}
+
+/* Fix for Safari transitions and animations */
+@supports (-webkit-touch-callout: none) {
+  .transition-transform {
+    -webkit-transition: -webkit-transform 0.3s ease;
+    transition: -webkit-transform 0.3s ease;
+    transition: transform 0.3s ease;
+  }
+  
+  .hover\:-translate-y-2:hover {
+    -webkit-transform: translateY(-0.5rem);
+    transform: translateY(-0.5rem);
+  }
+  
+  .hover\:scale-110:hover {
+    -webkit-transform: scale(1.1);
+    transform: scale(1.1);
+  }
+}
+
+/* Fix for Safari form elements */
+input, 
+button, 
+textarea, 
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  border-radius: 0;
+}
+
+/* Fix for iPad touch interactions */
+@media (pointer: coarse) {
+  a, button, .interactive {
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    min-height: 44px; /* Minimum touch target size for accessibility */
+  }
+}
+
+/* Fix for Safari image rendering */
+img {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* Hardware acceleration for smoother animations in Safari */
+.hardware-accelerated {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000;
+  perspective: 1000;
+}
+
+/* Fix for Safari sticky positioning */
+.sticky {
+  position: -webkit-sticky;
+  position: sticky;
+}
+
+/* Fix for Safari gradients */
+@supports (-webkit-touch-callout: none) {
+  .bg-gradient-to-r {
+    background-image: -webkit-linear-gradient(left, var(--tw-gradient-stops));
+  }
+}
+
+/* Fix for Safari animations */
+.fade-in {
+  -webkit-animation: fadeIn 0.5s ease-in;
+  animation: fadeIn 0.5s ease-in;
+}
+
+@-webkit-keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Fix for Safari scrolling */
+.smooth-scroll {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Fix for Safari rounded corners */
+.rounded-lg {
+  -webkit-border-radius: 0.5rem;
+  border-radius: 0.5rem;
+}
+
+.rounded-full {
+  -webkit-border-radius: 9999px;
+  border-radius: 9999px;
+}
+
+/* Fix for Safari box shadows */
+.shadow-lg {
+  -webkit-box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Fix for Safari focus styles */
+*:focus {
+  outline: none;
+}
+
+.focus\:ring-2:focus {
+  -webkit-box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+}
+
+/* iPad-specific media query */
+@media only screen and (min-device-width: 768px) and (max-device-width: 1024px) {
+  /* Increase touch targets for iPad */
+  button, a, .interactive {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Improve text readability on iPad */
+  p, h1, h2, h3, h4, h5, h6 {
+    -webkit-text-size-adjust: 100%;
+  }
+} 

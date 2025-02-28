@@ -1,0 +1,267 @@
+/* Global styles with cross-browser compatibility */
+
+:root {
+  --vh: 1vh;
+}
+
+/* Fix for iOS 100vh issue */
+.min-h-screen {
+  min-height: 100vh; /* Fallback */
+  min-height: calc(var(--vh, 1vh) * 100);
+}
+
+/* Additional fix for iOS Safari full height */
+@supports (-webkit-touch-callout: none) {
+  .h-screen {
+    height: -webkit-fill-available;
+  }
+  
+  .min-h-screen {
+    min-height: -webkit-fill-available;
+  }
+}
+
+/* Safari-specific styles */
+body.safari {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* iPad-specific styles */
+body.ipad {
+  touch-action: manipulation;
+  /* Prevent elastic scrolling/bounce effect on iPad */
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
+
+/* Improve touch targets on mobile devices */
+@media (max-width: 768px) {
+  button, 
+  a, 
+  input[type="submit"],
+  input[type="button"],
+  .interactive {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0.5rem 1rem;
+  }
+}
+
+/* Fix for Safari flexbox gap issues */
+@supports (-webkit-touch-callout: none) {
+  .flex.gap-3 > * + * {
+    margin-left: 0.75rem;
+  }
+  
+  .flex-col.gap-3 > * + * {
+    margin-top: 0.75rem;
+  }
+  
+  .flex.gap-4 > * + * {
+    margin-left: 1rem;
+  }
+  
+  .flex-col.gap-4 > * + * {
+    margin-top: 1rem;
+  }
+  
+  .flex.gap-6 > * + * {
+    margin-left: 1.5rem;
+  }
+  
+  .flex-col.gap-6 > * + * {
+    margin-top: 1.5rem;
+  }
+  
+  .flex.gap-8 > * + * {
+    margin-left: 2rem;
+  }
+  
+  .flex-col.gap-8 > * + * {
+    margin-top: 2rem;
+  }
+}
+
+/* Fix for Safari grid gap issues */
+@supports (-webkit-touch-callout: none) {
+  .grid.gap-6 {
+    grid-gap: 1.5rem;
+  }
+  
+  .grid.gap-8 {
+    grid-gap: 2rem;
+  }
+}
+
+/* Improve form elements on Safari */
+input,
+textarea,
+select,
+button {
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 0.5rem;
+}
+
+/* Fix for Safari focus ring */
+*:focus {
+  outline: none;
+}
+
+*:focus-visible {
+  outline: 2px solid #3B82F6;
+  outline-offset: 2px;
+}
+
+/* Fix for Safari transitions */
+.transition-all,
+.transition-colors,
+.transition-opacity,
+.transition-shadow,
+.transition-transform {
+  -webkit-transition-property: all;
+  transition-property: all;
+  -webkit-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  -webkit-transition-duration: 150ms;
+  transition-duration: 150ms;
+}
+
+/* Fix for Safari image rendering */
+img {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* Hardware acceleration for animations */
+.animate-spin,
+.animate-pulse,
+.animate-bounce,
+.transition-transform {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000;
+  perspective: 1000;
+}
+
+/* Fix for Safari sticky positioning */
+.sticky {
+  position: -webkit-sticky;
+  position: sticky;
+}
+
+/* Fix for Safari scrolling */
+.overflow-auto,
+.overflow-scroll {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Fix for Safari text rendering */
+h1, h2, h3, h4, h5, h6, p, span, a, button {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Fix for Safari border-radius */
+.rounded-lg {
+  -webkit-border-radius: 0.5rem;
+  border-radius: 0.5rem;
+}
+
+.rounded-full {
+  -webkit-border-radius: 9999px;
+  border-radius: 9999px;
+}
+
+/* Fix for Safari box-shadow */
+.shadow-lg {
+  -webkit-box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Fix for Safari gradients */
+.bg-gradient-to-r {
+  background-image: -webkit-linear-gradient(left, var(--tw-gradient-stops));
+  background-image: linear-gradient(to right, var(--tw-gradient-stops));
+}
+
+/* Fix for iOS Safari notch */
+@supports (padding: max(0px)) {
+  .safe-padding-top {
+    padding-top: max(0.5rem, env(safe-area-inset-top));
+  }
+  
+  .safe-padding-bottom {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
+  
+  .safe-padding-left {
+    padding-left: max(0.5rem, env(safe-area-inset-left));
+  }
+  
+  .safe-padding-right {
+    padding-right: max(0.5rem, env(safe-area-inset-right));
+  }
+}
+
+/* Fix for iPad Pro orientation changes */
+@media screen and (min-width: 1024px) and (max-width: 1366px) and (orientation: portrait) {
+  .ipad-pro-portrait-fix {
+    height: 100%;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media screen and (min-width: 1024px) and (max-width: 1366px) and (orientation: landscape) {
+  .ipad-pro-landscape-fix {
+    width: 100%;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Cross-browser spacing consistency */
+/* This ensures consistent spacing between navigation and content across browsers */
+.hero-section {
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+}
+
+@media (min-width: 768px) {
+  .hero-section {
+    padding-top: 4rem;
+    padding-bottom: 4rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero-section {
+    padding-top: 6rem;
+    padding-bottom: 6rem;
+  }
+}
+
+/* Chrome-specific adjustments */
+@media screen and (-webkit-min-device-pixel-ratio:0) and (min-resolution:.001dpcm) {
+  .chrome-spacing {
+    padding-top: calc(3rem + 8px); /* Add 8px to match Safari's spacing */
+  }
+  
+  @media (min-width: 768px) {
+    .chrome-spacing {
+      padding-top: calc(4rem + 8px);
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .chrome-spacing {
+      padding-top: calc(6rem + 8px);
+    }
+  }
+} 

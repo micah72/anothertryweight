@@ -9,6 +9,10 @@ const FoodGallery = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedFood, setSelectedFood] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editFormData, setEditFormData] = useState({});
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -38,10 +42,13 @@ const FoodGallery = () => {
 
   const handleFoodClick = (food) => {
     setSelectedFood(food);
+    setDeleteConfirm(false);
   };
 
   const handleCloseDetail = () => {
     setSelectedFood(null);
+    setIsEditing(false);
+    setDeleteConfirm(false);
   };
 
   const handleAddPhoto = () => {
@@ -83,6 +90,115 @@ const FoodGallery = () => {
       carbs: 'N/A',
       fat: 'N/A'
     };
+  };
+
+  // Handle edit button click
+  const handleEditClick = () => {
+    // Initialize edit form with current food data
+    setEditFormData({
+      foodName: selectedFood.foodName,
+      calories: selectedFood.calories,
+      healthScore: selectedFood.healthScore,
+      // Parse analysis data if it exists
+      ...(() => {
+        try {
+          if (selectedFood.analysisData) {
+            const analysis = JSON.parse(selectedFood.analysisData);
+            return {
+              protein: analysis.protein || '',
+              carbs: analysis.carbs || '',
+              fat: analysis.fat || '',
+              benefits: analysis.benefits || '',
+              concerns: analysis.concerns || ''
+            };
+          }
+          return {};
+        } catch (e) {
+          console.error('Error parsing analysis data for edit form:', e);
+          return {};
+        }
+      })()
+    });
+    setIsEditing(true);
+  };
+
+  // Handle form input changes
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditFormData({
+      ...editFormData,
+      [name]: name === 'calories' || name === 'healthScore' ? 
+        (value === '' ? '' : Number(value)) : value
+    });
+  };
+
+  // Handle form submission
+  const handleSubmitEdit = async (e) => {
+    e.preventDefault();
+    
+    try {
+      setLoading(true);
+      
+      // Prepare analysis data
+      const analysisData = JSON.stringify({
+        protein: editFormData.protein || '',
+        carbs: editFormData.carbs || '',
+        fat: editFormData.fat || '',
+        benefits: editFormData.benefits || '',
+        concerns: editFormData.concerns || ''
+      });
+      
+      // Update food entry
+      await dbService.updateFoodEntry(selectedFood.id, {
+        foodName: editFormData.foodName,
+        calories: editFormData.calories,
+        healthScore: editFormData.healthScore,
+        analysisData
+      });
+      
+      // Close edit form and refresh data
+      setIsEditing(false);
+      
+      // Update the selected food with new data
+      setSelectedFood({
+        ...selectedFood,
+        foodName: editFormData.foodName,
+        calories: editFormData.calories,
+        healthScore: editFormData.healthScore,
+        analysisData
+      });
+      
+    } catch (error) {
+      console.error('Error updating food entry:', error);
+      setError('Failed to update food entry. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle delete button click
+  const handleDeleteClick = () => {
+    setDeleteConfirm(true);
+  };
+
+  // Handle confirm delete
+  const handleConfirmDelete = async () => {
+    try {
+      setIsDeleting(true);
+      await dbService.deleteFoodEntry(selectedFood.id);
+      setSelectedFood(null);
+      setDeleteConfirm(false);
+    } catch (error) {
+      console.error('Error deleting food entry:', error);
+      setError('Failed to delete food entry. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Handle cancel delete
+  const handleCancelDelete = () => {
+    setDeleteConfirm(false);
   };
 
   if (!user) {
@@ -193,55 +309,55 @@ const FoodGallery = () => {
       </div>
 
       {/* Food Detail Modal */}
-      {selectedFood && (
+      {selectedFood && !isEditing && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-auto">
+          <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-auto">
             <div className="relative">
               <img 
                 src={selectedFood.imagePath} 
                 alt={selectedFood.foodName}
-                className="w-full h-64 object-cover" 
+                className="w-full h-48 object-cover" 
               />
               <button 
                 onClick={handleCloseDetail}
                 className="absolute top-4 right-4 bg-white rounded-full p-2 shadow-md"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
             
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold text-gray-900">{selectedFood.foodName}</h2>
+            <div className="p-4">
+              <div className="flex justify-between items-center mb-2">
+                <h2 className="text-xl font-bold text-gray-900">{selectedFood.foodName}</h2>
                 <div className="text-sm text-gray-500">
                   {selectedFood.created_at ? formatDate(selectedFood.created_at) : 'Unknown date'}
                 </div>
               </div>
               
-              <div className="grid grid-cols-4 gap-4 mb-6">
-                <div className="text-center p-3 bg-blue-50 rounded-lg">
-                  <div className="text-xl font-bold text-blue-600">{selectedFood.calories}</div>
+              <div className="grid grid-cols-4 gap-2 mb-4">
+                <div className="text-center p-2 bg-blue-50 rounded-lg">
+                  <div className="text-lg font-bold text-blue-600">{selectedFood.calories}</div>
                   <div className="text-xs text-gray-500">Calories</div>
                 </div>
-                <div className="text-center p-3 bg-red-50 rounded-lg">
-                  <div className="text-xl font-bold text-red-600">{extractNutrients(selectedFood).protein}</div>
+                <div className="text-center p-2 bg-red-50 rounded-lg">
+                  <div className="text-lg font-bold text-red-600">{extractNutrients(selectedFood).protein}</div>
                   <div className="text-xs text-gray-500">Protein</div>
                 </div>
-                <div className="text-center p-3 bg-yellow-50 rounded-lg">
-                  <div className="text-xl font-bold text-yellow-600">{extractNutrients(selectedFood).carbs}</div>
+                <div className="text-center p-2 bg-yellow-50 rounded-lg">
+                  <div className="text-lg font-bold text-yellow-600">{extractNutrients(selectedFood).carbs}</div>
                   <div className="text-xs text-gray-500">Carbs</div>
                 </div>
-                <div className="text-center p-3 bg-green-50 rounded-lg">
-                  <div className="text-xl font-bold text-green-600">{extractNutrients(selectedFood).fat}</div>
+                <div className="text-center p-2 bg-green-50 rounded-lg">
+                  <div className="text-lg font-bold text-green-600">{extractNutrients(selectedFood).fat}</div>
                   <div className="text-xs text-gray-500">Fat</div>
                 </div>
               </div>
               
-              <div className="border-t border-gray-200 pt-6">
-                <h3 className="font-semibold text-gray-900 mb-3">Analysis</h3>
-                <div className="bg-gray-50 p-4 rounded-md">
+              <div className="border-t border-gray-200 pt-4">
+                <h3 className="font-semibold text-gray-900 mb-2">Analysis</h3>
+                <div className="bg-gray-50 p-3 rounded-md">
                   <h4 className="font-semibold text-gray-800">Health Score: {selectedFood.healthScore}/10</h4>
                   {selectedFood.analysisData && (
                     <>
@@ -262,14 +378,233 @@ const FoodGallery = () => {
                 </div>
               </div>
               
-              <div className="mt-6 flex justify-end">
+              {/* Delete Confirmation */}
+              {deleteConfirm && (
+                <div className="mt-4 bg-red-50 p-3 rounded-md border border-red-200">
+                  <h4 className="font-semibold text-red-700 mb-2">Confirm Delete</h4>
+                  <p className="text-sm text-red-600 mb-3">
+                    Are you sure you want to delete "{selectedFood.foodName}"? This action cannot be undone.
+                  </p>
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={handleConfirmDelete}
+                      disabled={isDeleting}
+                      className="px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors duration-200 flex items-center text-sm"
+                    >
+                      {isDeleting ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Deleting...
+                        </>
+                      ) : (
+                        'Yes, Delete'
+                      )}
+                    </button>
+                    <button
+                      onClick={handleCancelDelete}
+                      className="px-3 py-1.5 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors duration-200 text-sm"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+              
+              <div className="mt-4 flex justify-between">
+                <div className="flex space-x-2">
+                  <button 
+                    onClick={handleEditClick}
+                    className="px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm"
+                  >
+                    Edit
+                  </button>
+                  <button 
+                    onClick={handleDeleteClick}
+                    className="px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors duration-200 text-sm"
+                  >
+                    Delete
+                  </button>
+                </div>
                 <button 
                   onClick={handleCloseDetail}
-                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors duration-200"
+                  className="px-3 py-1.5 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors duration-200 text-sm"
                 >
                   Close
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Food Modal */}
+      {selectedFood && isEditing && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-auto">
+            <div className="p-4">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-gray-900">Edit Food Entry</h2>
+                <button 
+                  onClick={() => setIsEditing(false)}
+                  className="bg-gray-200 rounded-full p-1.5 hover:bg-gray-300"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <form onSubmit={handleSubmitEdit}>
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <label htmlFor="foodName" className="block text-sm font-medium text-gray-700 mb-1">
+                      Food Name
+                    </label>
+                    <input
+                      type="text"
+                      id="foodName"
+                      name="foodName"
+                      value={editFormData.foodName || ''}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label htmlFor="calories" className="block text-sm font-medium text-gray-700 mb-1">
+                        Calories
+                      </label>
+                      <input
+                        type="number"
+                        id="calories"
+                        name="calories"
+                        value={editFormData.calories || ''}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
+                        min="0"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="healthScore" className="block text-sm font-medium text-gray-700 mb-1">
+                        Health Score (0-10)
+                      </label>
+                      <input
+                        type="number"
+                        id="healthScore"
+                        name="healthScore"
+                        value={editFormData.healthScore || ''}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
+                        min="0"
+                        max="10"
+                        step="0.1"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label htmlFor="protein" className="block text-sm font-medium text-gray-700 mb-1">
+                        Protein (g)
+                      </label>
+                      <input
+                        type="text"
+                        id="protein"
+                        name="protein"
+                        value={editFormData.protein || ''}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="carbs" className="block text-sm font-medium text-gray-700 mb-1">
+                        Carbs (g)
+                      </label>
+                      <input
+                        type="text"
+                        id="carbs"
+                        name="carbs"
+                        value={editFormData.carbs || ''}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="fat" className="block text-sm font-medium text-gray-700 mb-1">
+                        Fat (g)
+                      </label>
+                      <input
+                        type="text"
+                        id="fat"
+                        name="fat"
+                        value={editFormData.fat || ''}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="benefits" className="block text-sm font-medium text-gray-700 mb-1">
+                      Health Benefits
+                    </label>
+                    <textarea
+                      id="benefits"
+                      name="benefits"
+                      value={editFormData.benefits || ''}
+                      onChange={handleInputChange}
+                      rows="2"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    ></textarea>
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="concerns" className="block text-sm font-medium text-gray-700 mb-1">
+                      Health Concerns
+                    </label>
+                    <textarea
+                      id="concerns"
+                      name="concerns"
+                      value={editFormData.concerns || ''}
+                      onChange={handleInputChange}
+                      rows="2"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    ></textarea>
+                  </div>
+                  
+                  <div className="flex justify-end space-x-2 mt-3">
+                    <button
+                      type="button"
+                      onClick={() => setIsEditing(false)}
+                      className="px-3 py-1.5 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors duration-200 text-sm"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 flex items-center text-sm"
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Saving...
+                        </>
+                      ) : (
+                        'Save Changes'
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </form>
             </div>
           </div>
         </div>
