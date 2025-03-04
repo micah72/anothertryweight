@@ -19,25 +19,35 @@ const MetaTags = () => {
     }
     descriptionMeta.content = 'SnapLicious AI - A comprehensive health and meal planning app';
     
-    // Set viewport
+    // Set viewport with viewport-fit=cover for iOS devices with notches
     let viewportMeta = document.querySelector('meta[name="viewport"]');
     if (!viewportMeta) {
       viewportMeta = document.createElement('meta');
       viewportMeta.name = 'viewport';
       document.head.appendChild(viewportMeta);
     }
-    viewportMeta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
+    viewportMeta.content = 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover';
     
-    // Apple specific meta tags
+    // Apple specific meta tags for proper status bar handling
     setMetaTag('apple-mobile-web-app-capable', 'yes');
-    setMetaTag('apple-mobile-web-app-status-bar-style', 'black-translucent');
+    setMetaTag('apple-mobile-web-app-status-bar-style', 'default');
+    setMetaTag('apple-mobile-web-app-title', 'SnapLicious AI');
     setMetaTag('format-detection', 'telephone=no');
     
     // Microsoft specific meta tags
     setMetaTag('msapplication-tap-highlight', 'no');
     
-    // Safari specific meta tags
+    // Theme color matching the primary blue
     setMetaTag('theme-color', '#3B82F6');
+    
+    // Add a manifest link for PWA
+    let manifestLink = document.querySelector('link[rel="manifest"]');
+    if (!manifestLink) {
+      manifestLink = document.createElement('link');
+      manifestLink.rel = 'manifest';
+      manifestLink.href = '/manifest.json';
+      document.head.appendChild(manifestLink);
+    }
     
     // Preload critical resources
     const preconnectUrls = [

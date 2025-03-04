@@ -22,21 +22,24 @@
   body {
     @apply bg-white text-gray-800 min-h-screen;
     margin: 0;
-    height: 100%;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    display: flex;
-    flex-direction: column;
-    min-width: 320px;
     min-height: 100vh;
-    /* Mobile optimizations */
-    -webkit-user-select: none;
-    user-select: none;
-    -webkit-touch-callout: none;
+    width: 100%;
+    overflow-x: hidden; /* Prevent horizontal scrolling */
+    position: relative;
   }
 }
 
 @layer components {
+  /* Utility class to hide scrollbars while allowing scrolling */
+  .hide-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;     /* Firefox */
+  }
+  
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
+
   .card-base {
     @apply bg-white rounded-lg shadow-md p-6;
   }
@@ -82,16 +85,21 @@
 
 /* Base HTML/Body Setup */
 html {
+  scroll-behavior: smooth;
   height: 100%;
-  overflow-y: auto;
-  -webkit-text-size-adjust: 100%;
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+  width: 100%;
+  position: relative;
 }
 
 #root {
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
   width: 100%;
+  max-width: 100vw; /* Ensure content doesn't exceed viewport width */
+  overflow-x: hidden; /* Triple ensure no horizontal overflow */
+  position: relative;
 }
 
 /* Links */
@@ -171,6 +179,428 @@ textarea {
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
   }
+  
+  /* Improved mobile menu styling */
+  .mobile-menu-open {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+  
+  /* Enhanced slide-in menu */
+  .fixed.inset-y-0.right-0.z-50 {
+    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.2);
+    width: 280px;
+    max-width: 85vw;
+    right: 0;
+    transform: translateX(100%);
+    will-change: transform;
+  }
+  
+  .fixed.inset-y-0.right-0.z-50.translate-x-0 {
+    transform: translateX(0);
+  }
+  
+  /* Smooth animation for mobile menu transitions */
+  .transform.transition-transform {
+    transition-duration: 300ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  /* Mobile menu spacing improvements */
+  .px-2.pt-2.pb-3.space-y-1 {
+    padding-top: max(60px, env(safe-area-inset-top) + 46px) !important; /* Add space for the close button + safe area */
+    padding-bottom: env(safe-area-inset-bottom, 1rem);
+    margin-top: 0 !important;
+  }
+  
+  /* Hamburger menu button enhancements */
+  .mobile-menu-button {
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: none;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  
+  /* Enhance visibility of mobile menu items */
+  .w-full .px-3.py-2 {
+    margin-bottom: 4px;
+    border-radius: 8px;
+    background-color: transparent !important;
+  }
+  
+  /* Improved dropdown animation */
+  .transition-all.duration-300 {
+    transition-property: max-height, opacity, visibility;
+    overflow: hidden;
+  }
+  
+  /* Overlay enhanced styling */
+  .fixed.inset-0.bg-black.bg-opacity-50 {
+    -webkit-tap-highlight-color: transparent;
+    will-change: opacity;
+    transition: opacity 0.3s ease;
+  }
+}
+
+/* iPhone specific enhancements */
+@media only screen and (max-width: 428px) {
+  /* iPhone menu adjustments */
+  .fixed.inset-y-0.right-0.z-50 {
+    width: 85vw;
+    max-width: 320px;
+  }
+  
+  /* Ensure buttons are easily tappable */
+  button, 
+  .mobile-menu-button,
+  a.flex,
+  .w-full button {
+    min-height: 44px;
+    padding: 10px 16px;
+  }
+  
+  /* iPhone landscape mode optimizations */
+  @media (orientation: landscape) {
+    .fixed.inset-y-0.right-0.z-50 {
+      padding-top: 0;
+    }
+    
+    .px-2.pt-2.pb-3.space-y-1 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      padding-top: 8px;
+    }
+    
+    .px-2.pt-2.pb-3.space-y-1 > div {
+      margin-top: 0 !important;
+    }
+  }
+
+  /* Fix for horizontal scrolling on iPhone/iOS */
+  .hero-section, 
+  .features-section,
+  .about-section,
+  .cta-section,
+  .food-section,
+  .footer-section {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+    padding-left: env(safe-area-inset-left, 0);
+    padding-right: env(safe-area-inset-right, 0);
+  }
+  
+  .container,
+  .max-w-7xl,
+  .max-w-6xl,
+  .max-w-5xl,
+  .max-w-4xl {
+    width: 100%;
+    max-width: 100vw;
+    padding-left: env(safe-area-inset-left, 1rem) !important;
+    padding-right: env(safe-area-inset-right, 1rem) !important;
+    box-sizing: border-box;
+  }
+
+  /* Mobile optimization for the title */
+  .flex-shrink-0.flex.items-center {
+    padding-left: env(safe-area-inset-left, 8px);
+  }
+  
+  .flex-shrink-0.flex.items-center a {
+    overflow: visible !important;
+    white-space: nowrap !important;
+    text-overflow: clip !important;
+  }
+  
+  /* Ensure title is visible on iPhone in landscape */
+  @media (orientation: landscape) {
+    .flex-shrink-0.flex.items-center a {
+      max-width: none !important;
+    }
+  }
+
+  .site-logo {
+    max-width: none !important;
+    overflow: visible !important;
+    white-space: nowrap !important;
+    text-overflow: clip !important;
+    font-weight: 700 !important;
+    letter-spacing: normal !important;
+  }
+
+  /* Feature section improvements */
+  section.py-12.sm\:py-16.bg-white {
+    padding: 2rem 0.75rem;
+  }
+  
+  section.py-12.sm\:py-16.bg-white .container {
+    padding: 0 !important;
+  }
+
+  section.py-12.sm\:py-16.bg-white h2 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  section.py-12.sm\:py-16.bg-white .grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  /* Feature card enhancements */
+  section.py-12.sm\:py-16.bg-white .bg-blue-50 {
+    border-radius: 12px;
+    padding: 1.25rem !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  /* Icon container */
+  section.py-12.sm\:py-16.bg-white .w-12.h-12 {
+    width: 3.5rem;
+    height: 3.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  /* Icon size */
+  section.py-12.sm\:py-16.bg-white .w-12.h-12 svg {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+  
+  /* Card title */
+  section.py-12.sm\:py-16.bg-white h3 {
+    font-size: 1.125rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+  }
+  
+  /* Card description */
+  section.py-12.sm\:py-16.bg-white p.text-gray-600 {
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+
+  /* Increase space between sections */
+  .iphone-features-grid {
+    margin-top: 0.5rem;
+  }
+
+  /* Main navigation bar - add padding for status bar */
+  nav.bg-blue-500, nav.bg-blue-600 {
+    padding-top: env(safe-area-inset-top, 20px);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  
+  /* Adjust height to accommodate the extra padding */
+  nav .flex.justify-between.h-16 {
+    height: 4rem;
+    padding-top: 0.25rem;
+  }
+  
+  /* Logo and brand adjustment */
+  .flex-shrink-0.flex.items-center {
+    margin-top: 0;
+  }
+  
+  /* Mobile menu button positioning */
+  .mobile-menu-btn {
+    margin-top: 0.25rem;
+    height: 2.5rem;
+    width: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Better mobile menu button tap target */
+  .mobile-menu-btn svg {
+    height: 1.75rem;
+    width: 1.75rem;
+    stroke-width: 2;
+  }
+}
+
+/* Also add specific styling for iOS devices with notches */
+@supports (-webkit-touch-callout: none) {
+  @media only screen and (max-width: 428px) {
+    /* iOS specific padding adjustments */
+    body {
+      /* Prevent page bounce effect causing status bar to show */
+      overscroll-behavior-y: none;
+    }
+    
+    /* Ensure the status bar color matches the header */
+    .status-bar {
+      background-color: var(--primary);
+    }
+    
+    /* Apply status bar padding to all fixed headers */
+    nav.bg-blue-500, nav.bg-blue-600 {
+      padding-top: env(safe-area-inset-top, 20px) !important;
+    }
+    
+    /* Adjust content padding to not be hidden behind the header */
+    #root > div:first-child {
+      padding-top: env(safe-area-inset-top, 0);
+    }
+  }
+}
+
+/* iPad specific adjustments */
+@media only screen and (min-device-width: 768px) and (max-device-width: 1024px) {
+  .nav-item {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+  
+  .nav-item span {
+    font-size: 0.8rem !important;
+  }
+  
+  /* Admin-specific menu adjustments for iPad */
+  .admin-logged-in .fixed.inset-y-0.right-0.z-50 {
+    width: 320px;
+  }
+  
+  /* iPad specific header spacing */
+  .max-w-7xl.mx-auto.px-2 {
+    padding-left: env(safe-area-inset-left, 1rem);
+    padding-right: env(safe-area-inset-right, 1rem);
+  }
+  
+  /* Improved dropdown positioning on iPad */
+  .dropdown-menu {
+    max-width: 260px;
+    right: 0;
+    left: auto;
+  }
+  
+  /* Ensure dropdown items are still readable */
+  .dropdown-menu a {
+    white-space: normal;
+  }
+  
+  /* iPad landscape specific adjustments */
+  @media (orientation: landscape) {
+    .food-grid {
+      grid-template-columns: repeat(3, 1fr) !important;
+    }
+    
+    .food-gallery-grid {
+      grid-template-columns: repeat(3, 1fr) !important;
+    }
+  }
+  
+  /* iPad portrait specific adjustments */
+  @media (orientation: portrait) {
+    .food-grid {
+      grid-template-columns: repeat(2, 1fr) !important;
+    }
+    
+    .food-gallery-grid {
+      grid-template-columns: repeat(2, 1fr) !important;
+    }
+  }
+  
+  /* Better tap targets for iPad */
+  .mobile-menu-button,
+  .dropdown-container button,
+  .nav-item a,
+  .nav-item button {
+    -webkit-tap-highlight-color: transparent;
+    min-height: 44px;
+  }
+}
+
+/* iOS Notch and Safe Area handling */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .fixed.inset-y-0.right-0.z-50 {
+    padding-top: env(safe-area-inset-top, 0);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    padding-right: env(safe-area-inset-right, 0);
+    height: 100vh;
+    height: -webkit-fill-available;
+  }
+  
+  nav.bg-blue-600 {
+    padding-left: env(safe-area-inset-left, 0);
+    padding-right: env(safe-area-inset-right, 0);
+  }
+  
+  /* Add padding to mobile menu when notched */
+  .flex.items-center.justify-between.p-4 {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+}
+
+/* Admin-specific styling */
+.bg-yellow-400.text-blue-800 {
+  background-color: #facc15 !important;
+  color: #1e40af !important;
+  padding: 0.25rem 0.5rem !important;
+  border-radius: 9999px !important;
+  font-weight: 600 !important;
+  font-size: 0.75rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Add class to body when admin is logged in for specific styling */
+body.admin-user .mobile-menu-button {
+  background-color: rgba(250, 204, 21, 0.3) !important;
+  border: 2px solid #facc15 !important;
+}
+
+/* Admin-specific mobile menu styling */
+body.admin-user .fixed.inset-y-0.right-0.z-50 {
+  background-color: var(--primary) !important; /* Using primary variable for consistent color */
+  border-left: 3px solid #facc15; /* Yellow border to indicate admin status */
+}
+
+body.admin-user .flex.items-center.justify-between.p-4 {
+  background-color: inherit;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: max(1rem, env(safe-area-inset-top));
+  color: white;
+}
+
+body.admin-user .fixed.inset-y-0.right-0.z-50 .px-2.pt-2.pb-3.space-y-1 .w-full button,
+body.admin-user .fixed.inset-y-0.right-0.z-50 .px-2.pt-2.pb-3.space-y-1 .w-full a {
+  border-radius: 8px;
+  margin-bottom: 4px;
+  transition: all 0.2s ease;
+  background-color: transparent !important;
+  color: white !important;
+}
+
+body.admin-user .fixed.inset-y-0.right-0.z-50 .px-2.pt-2.pb-3.space-y-1 .w-full button:hover,
+body.admin-user .fixed.inset-y-0.right-0.z-50 .px-2.pt-2.pb-3.space-y-1 .w-full a:hover {
+  background-color: rgba(250, 204, 21, 0.2) !important;
+}
+
+/* Special styling for admin dashboard links */
+body.admin-user .fixed.inset-y-0.right-0.z-50 a[href="/admin-dashboard"] {
+  font-weight: 600 !important;
 }
 
 /* PWA Display Mode */
@@ -367,84 +797,113 @@ textarea {
   position: absolute;
   top: 100%;
   left: 0;
-  background-color: white;
+  background-color: var(--primary) !important; /* Match the menu bar color */
   border-radius: 0.375rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Enhanced shadow */
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2); /* Stronger shadow for better visibility */
   z-index: 50;
   min-width: 12rem;
   margin-top: 0.5rem;
   transition: opacity 0.2s ease, transform 0.2s ease;
-  border: 1px solid rgba(59, 130, 246, 0.2); /* Light blue border */
+  border: none; /* Remove the border */
   overflow: hidden;
-  /* Clean display state handling */
-  opacity: 0;
-  transform: translateY(-10px);
-  pointer-events: none;
-  visibility: hidden;
+  /* Force visibility */
+  display: none;
 }
 
-/* Improved block and hidden states */
+/* Improved block and hidden states - using !important to override any conflicting styles */
 .dropdown-menu.block {
-  display: block;
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events: auto;
-  visibility: visible;
+  display: block !important;
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+  pointer-events: auto !important;
+  visibility: visible !important;
+  animation: fadeIn 0.2s ease-out;
 }
 
 .dropdown-menu.hidden {
-  display: none;
-  opacity: 0;
-  pointer-events: none;
-  visibility: hidden;
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
 }
 
-/* Enhanced dropdown menu links */
+/* Better hover effects for desktop dropdown items */
 .dropdown-menu a {
-  color: #374151 !important; /* Dark gray text for better readability */
-  padding: 0.625rem 1rem;
-  display: flex;
-  align-items: center;
-  text-decoration: none;
   transition: background-color 0.15s ease, color 0.15s ease;
-  width: 100%; /* Make links fill the full width */
-  font-weight: 500;
-  border-left: 3px solid transparent; /* Prepare for hover effect */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex !important;
+  align-items: center !important;
+  padding: 0.5rem 1rem !important;
+  color: white !important;
 }
 
 .dropdown-menu a:hover {
-  background-color: #f3f4f6;
-  color: var(--primary) !important;
-  border-left-color: var(--primary); /* Blue indicator on hover */
+  background-color: rgba(29, 78, 216, 0.8) !important; /* darker blue when hovered */
 }
 
-/* Mobile dropdown menu with improved visibility */
+/* Enhanced dropdown container for better hover detection */
+.dropdown-container {
+  position: relative;
+  z-index: 40; /* Keep dropdown containers above other elements */
+}
+
+/* Desktop hover support for dropdowns */
+@media (min-width: 768px) {
+  .dropdown-container:hover .dropdown-menu,
+  .dropdown-container:focus-within .dropdown-menu,
+  .dropdown-container .dropdown-menu.block {
+    display: block !important;
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+    pointer-events: auto !important;
+    visibility: visible !important;
+  }
+  
+  .dropdown-container:hover button,
+  .dropdown-container:focus-within button {
+    background-color: var(--primary-dark) !important; /* Use primary-dark variable instead of fixed color */
+  }
+  
+  .dropdown-menu {
+    width: auto;
+    min-width: 200px;
+    border: none; /* Ensure no border on desktop */
+  }
+}
+
 @media (max-width: 768px) {
   .dropdown-menu {
     position: static;
     box-shadow: none;
-    background-color: white;
+    background-color: white !important;
     border-radius: 0.375rem;
     margin: 0.25rem 0 0.25rem 1rem;
     border-left: 2px solid #3b82f6;
     transition: max-height 0.3s ease, opacity 0.2s ease;
     z-index: 30; /* Ensure proper stacking */
+    width: auto;
+    transform: none;
   }
   
   .dropdown-menu.block {
-    display: block;
+    display: block !important;
     max-height: 500px;
     opacity: 1;
     padding: 0.25rem 0;
-    visibility: visible; /* Ensure visibility */
+    visibility: visible !important; /* Ensure visibility */
+    transform: none;
+    animation: fadeIn 0.3s ease;
   }
   
   .dropdown-menu.hidden {
-    display: none;
+    display: none !important;
     max-height: 0;
     opacity: 0;
     padding: 0;
-    visibility: hidden; /* Ensure hidden */
+    visibility: hidden !important; /* Ensure hidden */
+    transform: none;
   }
   
   .dropdown-menu a {
@@ -458,87 +917,103 @@ textarea {
     width: 100%; /* Full width */
   }
   
-  .dropdown-menu a:hover {
-    background-color: #f3f4f6;
-    color: #1d4ed8 !important;
-    border-left-color: #3b82f6;
-  }
-  
-  /* Fix SVG pointer events */
-  .dropdown-menu a svg,
-  .dropdown-menu a svg path {
-    stroke: #3b82f6 !important;
-    pointer-events: none;
-  }
-  
-  .dropdown-menu a:hover svg,
-  .dropdown-menu a:hover svg path {
-    stroke: #1d4ed8 !important;
-  }
-  
-  /* Prevent event bubbling issues */
-  .dropdown-menu a * {
-    pointer-events: none;
+  /* Force mobile dropdown items to be visible when open */
+  .dropdown-menu.block a {
+    display: flex !important;
   }
 }
 
-/* Mobile navigation specific styles */
+/* Responsive navigation improvements */
 @media (max-width: 767px) {
-  /* This ensures our styles in styles/index.css take precedence */
-  .dropdown-menu {
+  /* Hamburger menu button styling */
+  .md\:hidden button {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    border: 2px solid rgba(255, 255, 255, 0.5) !important;
+    border-radius: 8px !important;
+    padding: 8px !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
+    z-index: 60 !important;
+    position: relative !important;
+  }
+
+  /* Mobile dropdown menu items in white background */
+  .bg-white.rounded-md {
     background-color: white !important;
-    border-radius: 0.5rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-    border-left: 2px solid #3b82f6 !important;
-    will-change: transform, opacity; /* Optimize for animations */
-    isolation: isolate; /* Create stacking context */
-    contain: content; /* Contain layout and paint operations */
-    z-index: 30; /* Ensure it's above other elements */
+    border: 1px solid #e5e7eb !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 
+                0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+    margin-top: 4px !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
   }
-  
-  /* Ensure mobile dropdown icons are blue */
-  .mobile-dropdown-icon svg,
-  .mobile-dropdown-icon svg path {
+
+  /* Improve visibility of dropdown menu items */
+  .bg-white.rounded-md a {
+    color: #3b82f6 !important;
+    font-weight: 500 !important;
+    padding: 10px 16px !important;
+    border-bottom: 1px solid #f3f4f6 !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  /* Highlight on hover */
+  .bg-white.rounded-md a:hover {
+    background-color: #f9fafb !important;
+  }
+
+  /* Style dropdown labels */
+  .bg-white.rounded-md a span {
+    color: #3b82f6 !important;
+    font-weight: 500 !important;
+    margin-left: 8px !important;
+  }
+
+  /* Style icons in mobile dropdown */
+  .bg-white.rounded-md a svg {
+    color: #3b82f6 !important;
     stroke: #3b82f6 !important;
-    pointer-events: none !important;
+    min-width: 20px !important;
+  }
+
+  /* Mobile menu hamburger icon */
+  .md\:hidden button svg {
+    stroke-width: 3 !important;
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  /* Ensure the title is fully visible on mobile */
+  .flex-shrink-0.flex.items-center a {
+    overflow: visible;
+    white-space: nowrap;
+    text-overflow: unset;
+    max-width: 160px !important;
+    font-size: 1.125rem;
+  }
+}
+
+/* iPad specific adjustments */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .nav-item {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
   }
   
-  /* Fix for mobile hover issues */
-  .mobile-dropdown-item {
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
-    position: relative;
-    z-index: 1;
-    user-select: none; /* Prevent text selection */
+  .nav-item span {
+    font-size: 0.8rem !important;
   }
   
-  .mobile-dropdown-item:hover,
-  .mobile-dropdown-item:active {
-    background-color: #f3f4f6 !important;
-    color: #1d4ed8 !important;
+  /* Improve dropdown positioning on iPad */
+  .dropdown-menu {
+    max-width: 260px;
+    right: 0;
+    left: auto;
   }
   
-  .mobile-dropdown-item:hover .mobile-dropdown-icon svg,
-  .mobile-dropdown-item:hover .mobile-dropdown-icon svg path,
-  .mobile-dropdown-item:active .mobile-dropdown-icon svg,
-  .mobile-dropdown-item:active .mobile-dropdown-icon svg path {
-    stroke: #1d4ed8 !important;
-  }
-  
-  /* Fix for browser extension conflicts */
-  .dropdown-menu * {
-    contain: content; /* Contain layout and paint operations */
-  }
-  
-  /* Fix for mobile menu button */
-  nav button {
-    -webkit-tap-highlight-color: transparent; /* Remove tap highlight on iOS */
-  }
-  
-  /* Fix for body when mobile menu is open */
-  body.mobile-menu-open {
-    overflow: hidden; /* Prevent scrolling when menu is open */
+  /* Ensure dropdown items are still readable */
+  .dropdown-menu a {
+    white-space: normal;
   }
 }
 
@@ -694,5 +1169,637 @@ textarea {
 @media (max-width: 640px) {
   .food-nutritional-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Critical fix for dropdown visibility */
+.dropdown-menu.block,
+.dropdown-container:hover .dropdown-menu,
+.dropdown-container:focus-within .dropdown-menu {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+/* Force dropdown visibility when active */
+[aria-expanded="true"] + .dropdown-menu,
+button[aria-expanded="true"] + div > .dropdown-menu {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+/* Ensure dropdown items are visible */
+.dropdown-menu a {
+  display: flex !important;
+  align-items: center !important;
+  color: white !important;
+}
+
+@media (max-width: 768px) {
+  .dropdown-menu a {
+    color: #3b82f6 !important;
+  }
+}
+
+/* Critical dropdown visibility fixes */
+.dropdown-menu {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  z-index: 100 !important;
+}
+
+/* Ensure dropdown containers position correctly */
+.relative {
+  position: relative !important;
+}
+
+/* Fix dropdown positioning */
+.absolute {
+  position: absolute !important;
+}
+
+/* Override any transform properties that might hide the dropdown */
+.transform {
+  transform: none !important;
+}
+
+/* Ensure shadow styling is visible */
+.shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 
+              0 4px 6px -2px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Fix z-index stacking for navigation elements */
+nav {
+  z-index: 50 !important;
+}
+
+/* Fix mobile menu styling */
+.mobile-menu-open {
+  overflow: hidden;
+}
+
+@media (max-width: 767px) {
+  .md\:hidden.bg-blue-600.fixed {
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: 40;
+  }
+  
+  /* Ensure the title is fully visible on mobile */
+  .flex-shrink-0.flex.items-center a {
+    overflow: visible;
+    white-space: nowrap;
+    text-overflow: unset;
+    max-width: 160px !important;
+    font-size: 1.125rem;
+  }
+}
+
+/* Ensure dropdown links are visible and properly styled */
+.dropdown-menu .text-white {
+  color: white !important;
+}
+
+.dropdown-menu .hover\:bg-blue-800:hover {
+  background-color: #1e40af !important;
+}
+
+/* Fix for mobile dropdown */
+.bg-white.rounded-md .text-blue-600 {
+  color: var(--primary) !important;
+}
+
+.bg-white.rounded-md .hover\:bg-gray-100:hover {
+  background-color: #f3f4f6 !important;
+}
+
+/* Force visibility for Track, Kitchen, and Plan dropdowns specifically */
+[aria-controls="dropdown-Track"],
+[aria-controls="dropdown-Kitchen"],
+[aria-controls="dropdown-Plan"] {
+  cursor: pointer !important;
+  background-color: transparent !important;
+}
+
+#dropdown-Track,
+#dropdown-Kitchen,
+#dropdown-Plan {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background-color: var(--primary) !important;
+}
+
+/* Make nav button labels clearly visible */
+nav button span {
+  display: inline-block !important;
+  color: white !important;
+  font-weight: bold !important;
+  text-shadow: 0 0 1px rgba(0,0,0,0.2) !important;
+  margin: 0 4px !important;
+  font-size: 14px !important;
+}
+
+/* Ensure icon and text alignment in nav buttons */
+nav button {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  padding: 6px 12px !important;
+}
+
+/* Fix label alignment in dropdown items */
+.dropdown-menu a span:last-child {
+  margin-left: 4px !important;
+  display: inline-block !important;
+  color: white !important;
+  font-weight: 500 !important;
+}
+
+/* Emphasize dropdown buttons */
+nav button:has(+ .dropdown-menu) {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border-radius: 6px !important;
+}
+
+/* Enhanced dropdown menu visibility for Track, Kitchen, and Plan specifically */
+button:has(span:contains("Track")),
+button:has(span:contains("Kitchen")),
+button:has(span:contains("Plan")) {
+  background-color: transparent !important; /* Match menu bar background */
+  font-weight: bold !important;
+  color: white !important;
+  border-radius: 0 !important; /* Remove border radius */
+  box-shadow: none !important; /* Remove box shadow */
+}
+
+/* More compatible approach for Track, Kitchen, and Plan buttons */
+button[aria-controls="dropdown-Track"],
+button[aria-controls="dropdown-Kitchen"],
+button[aria-controls="dropdown-Plan"],
+button:has(+ .dropdown-menu) {
+  background-color: transparent !important; /* Match menu bar background */
+  font-weight: bold !important;
+  color: white !important;
+  border-radius: 0 !important; /* Remove border radius */
+  box-shadow: none !important; /* Remove box shadow */
+}
+
+/* Make sure dropdown menu text is visible */
+.dropdown-menu a {
+  color: white !important;
+  font-weight: 500 !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 8px 16px !important;
+}
+
+/* Fix any potential SVG display issues */
+nav svg {
+  display: inline-block !important;
+  vertical-align: middle !important;
+  width: 20px !important;
+  height: 20px !important;
+  color: white !important;
+  stroke: white !important;
+}
+
+/* Direct targeting of span elements within buttons */
+button span {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: inline !important;
+  color: white !important;
+}
+
+/* Special styling for the Track, Kitchen, and Plan buttons */
+nav button[aria-haspopup="true"] span {
+  color: white !important;
+  text-shadow: 0 0 2px rgba(0,0,0,0.3) !important;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  letter-spacing: 0.01em !important;
+}
+
+/* Final override for all text in navigation */
+.dropdown-menu a span,
+.dropdown-container button span,
+nav a span, 
+nav button span {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: inline !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+}
+
+/* Specific styling for mobile menu button */
+.mobile-menu-button {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  border: 2px solid rgba(255, 255, 255, 0.5) !important;
+  border-radius: 8px !important;
+  padding: 8px !important;
+  margin-right: 8px !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
+  position: relative !important;
+  z-index: 60 !important;
+}
+
+.mobile-menu-button svg {
+  stroke: white !important;
+  stroke-width: 3 !important;
+  width: 24px !important;
+  height: 24px !important;
+}
+
+/* Mobile submenu item colors */
+.bg-white.rounded-md a {
+  color: #3b82f6 !important;
+  font-weight: 500 !important;
+  padding: 12px 16px !important;
+  border-bottom: 1px solid #f3f4f6 !important;
+}
+
+.bg-white.rounded-md a span {
+  color: #3b82f6 !important;
+  font-weight: 500 !important;
+}
+
+.bg-white.rounded-md a:hover {
+  background-color: #f9fafb !important;
+}
+
+/* Fix header display */
+.flex.items-center.justify-between.p-4 {
+  background-color: inherit;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: max(1rem, env(safe-area-inset-top));
+  color: white;
+}
+
+/* Fix dropdown arrows */
+.dropdown-toggle svg.transform.rotate-180 {
+  transform: rotate(180deg);
+}
+
+/* Fix the menu buttons background for all users */
+.fixed.inset-y-0.right-0.z-50 {
+  background-color: var(--primary);
+}
+
+.fixed.inset-y-0.right-0.z-50 .w-full button,
+.fixed.inset-y-0.right-0.z-50 .w-full a {
+  background-color: transparent !important;
+  color: white !important;
+}
+
+.fixed.inset-y-0.right-0.z-50 .w-full button:hover,
+.fixed.inset-y-0.right-0.z-50 .w-full a:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Fix dropdowns in mobile menu */
+.fixed.inset-y-0.right-0.z-50 .mt-1.bg-blue-700 {
+  background-color: var(--primary-dark) !important;
+  border-radius: 0.375rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Fix mobile menu close button - improved visibility */
+.mobile-menu-close {
+  color: white;
+  transition: all 0.2s ease;
+  padding: 8px;
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background-color: rgba(0, 0, 0, 0.25);
+  border-radius: 50%;
+  z-index: 60;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-menu-close:hover {
+  opacity: 0.9;
+  background-color: rgba(0, 0, 0, 0.35);
+  transform: scale(1.05);
+}
+
+/* Mobile menu styles - Enhanced for better visibility */
+.mobile-menu {
+  transform: translateX(100%);
+  transition: transform 0.3s ease-in-out;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.5);
+  width: 80%;
+  max-width: 320px;
+  visibility: visible;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  background-color: var(--primary); /* Brighter blue (#3b82f6) to match screenshot */
+}
+
+.mobile-menu.open {
+  transform: translateX(0) !important;
+  right: 0 !important;
+  display: block !important;
+}
+
+/* Admin-specific mobile menu */
+.admin-body .mobile-menu {
+  background-color: var(--primary) !important; /* Match the same bright blue */
+  border-left: 3px solid #facc15;
+}
+
+/* Mobile menu buttons */
+.mobile-menu button,
+.mobile-menu a {
+  transition: background-color 0.2s ease;
+  margin-bottom: 2px;
+}
+
+.mobile-menu button:hover,
+.mobile-menu a:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Admin-specific mobile buttons */
+.admin-body .mobile-menu button:not(.mobile-menu-close):hover,
+.admin-body .mobile-menu a:hover {
+  background-color: rgba(255, 215, 0, 0.1);
+  border-left: 3px solid #ffd700;
+}
+
+/* Mobile dropdown styles */
+.mobile-dropdown {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+}
+
+.mobile-dropdown.open {
+  max-height: 300px;
+}
+
+@media (max-width: 640px) {
+  .header-links {
+    display: none;
+  }
+
+  .mobile-menu-btn {
+    display: flex;
+  }
+}
+
+/* Safe area insets for iOS */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .mobile-menu {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Mobile menu button */
+.mobile-menu-btn {
+  display: none;
+  background: transparent;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.mobile-menu-btn:hover {
+  opacity: 0.8;
+}
+
+@media (max-width: 640px) {
+  .header-links {
+    display: none;
+  }
+
+  .mobile-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* Remove debug styles */
+.debug-menu {
+  border: none !important;
+}
+
+/* Mobile menu close button */
+.mobile-menu-close {
+  color: white;
+  transition: all 0.2s ease;
+}
+
+.mobile-menu-close:hover {
+  opacity: 0.8;
+}
+
+body.admin-user .fixed.inset-y-0.right-0.z-50 a[href="/admin-dashboard"] {
+  font-weight: 600 !important;
+}
+
+/* Custom styling for site logo to ensure visibility */
+.site-logo {
+  max-width: max-content !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  display: block !important;
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.01em !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+  padding-left: max(0.5rem, env(safe-area-inset-left)) !important;
+}
+
+/* Enhanced logo visibility on mobile */
+@media only screen and (max-width: 428px) {
+  .site-logo {
+    font-size: 1.1rem !important;
+    letter-spacing: normal !important;
+  }
+  
+  .flex-shrink-0.flex.items-center a,
+  a.site-logo {
+    max-width: none !important;
+    overflow: visible !important;
+    white-space: nowrap !important;
+    text-overflow: clip !important;
+  }
+  
+  @media (orientation: landscape) {
+    .site-logo {
+      font-size: 1.15rem !important;
+    }
+  }
+}
+
+/* iPad specific adjustments for the logo */
+@media only screen and (min-device-width: 768px) and (max-device-width: 1024px) {
+  .site-logo {
+    font-size: 1.2rem !important;
+  }
+  
+  .flex-shrink-0.flex.items-center a,
+  a.site-logo {
+    max-width: none !important;
+    overflow: visible !important;
+  }
+}
+
+/* Make sure feature cards have equal height on all devices */
+@media (min-width: 429px) {
+  section.py-12.sm\:py-16.bg-white .bg-blue-50 {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  section.py-12.sm\:py-16.bg-white p.text-gray-600 {
+    flex-grow: 1;
+  }
+}
+
+/* Feature card styling for all devices */
+.feature-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+@media (hover: hover) {
+  .feature-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+}
+
+/* Mobile-specific feature card enhancements */
+@media only screen and (max-width: 428px) {
+  .feature-card {
+    margin-bottom: 0.75rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+  
+  /* Adjust the padding of the feature section for better spacing */
+  section.py-12.sm\:py-16.bg-white {
+    padding-top: 2.5rem;
+    padding-bottom: 2.5rem;
+  }
+  
+  /* Make icons pop with a subtle shadow */
+  section.py-12.sm\:py-16.bg-white .w-12.h-12 {
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.15);
+  }
+}
+
+/* iOS specific adjustments for feature cards */
+@supports (-webkit-touch-callout: none) {
+  @media screen and (max-width: 428px) {
+    /* iPhone specific spacing */
+    section.py-12.sm\:py-16.bg-white {
+      padding-left: max(0.75rem, env(safe-area-inset-left));
+      padding-right: max(0.75rem, env(safe-area-inset-right));
+    }
+    
+    /* Better tap targets */
+    .feature-card {
+      min-height: 200px;
+      -webkit-tap-highlight-color: transparent;
+    }
+  }
+  
+  /* Handle landscape orientation better */
+  @media screen and (max-width: 900px) and (orientation: landscape) {
+    .grid.grid-cols-1.sm\:grid-cols-2 {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    
+    section.py-12.sm\:py-16.bg-white .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+    
+    section.py-12.sm\:py-16.bg-white .feature-card {
+      padding: 1rem !important;
+    }
+    
+    section.py-12.sm\:py-16.bg-white h3 {
+      font-size: 1rem;
+      margin-bottom: 0.25rem;
+    }
+    
+    section.py-12.sm\:py-16.bg-white p.text-gray-600 {
+      font-size: 0.875rem;
+    }
+  }
+}
+
+/* Additional iPhone models with notch-specific adjustments */
+@media only screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3),
+       only screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2),
+       only screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3),
+       only screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3),
+       only screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) {
+  /* iPhone X, XS, 11 Pro, 12, 12 Pro, 13, 13 Pro, 14 */
+  
+  /* Ensure the navbar has enough padding for the notch */
+  nav.bg-blue-500, nav.bg-blue-600 {
+    padding-top: max(env(safe-area-inset-top, 44px), 44px);
+  }
+  
+  /* Status bar specific color */
+  .status-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: env(safe-area-inset-top, 44px);
+    background-color: var(--primary);
+    z-index: 49; /* Just below the nav bar */
+  }
+  
+  /* Fix for the hamburger menu position */
+  .mobile-menu-btn {
+    margin-top: 0.5rem;
+    padding-right: max(0.5rem, env(safe-area-inset-right, 0));
+  }
+  
+  /* Fix for the site logo position */
+  .site-logo {
+    padding-left: max(0.5rem, env(safe-area-inset-left, 0));
+  }
+  
+  /* Adjust overall page layout */
+  body {
+    /* Prevent content from being hidden under the nav */
+    padding-top: env(safe-area-inset-top, 0);
+  }
+}
+
+/* Better scaling for PWA on iOS devices */
+@media all and (display-mode: standalone) {
+  body {
+    /* Force hardware acceleration for smoother animations */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+  
+  /* Extra top padding for content below the navbar in PWA mode */
+  main, section:first-of-type {
+    padding-top: max(1rem, calc(env(safe-area-inset-top) + 0.5rem));
   }
 }

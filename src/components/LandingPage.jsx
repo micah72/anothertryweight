@@ -10,10 +10,11 @@ const LandingPage = () => {
   const [error, setError] = useState('');
   const [isSafari, setIsSafari] = useState(false);
   const [isIPad, setIsIPad] = useState(false);
+  const [isIPhone, setIsIPhone] = useState(false);
   const [isChrome, setIsChrome] = useState(false);
   const [orientation, setOrientation] = useState(window.innerWidth > window.innerHeight ? 'landscape' : 'portrait');
 
-  // Detect Safari and iPad on component mount
+  // Detect Safari, iPad, and iPhone on component mount
   useEffect(() => {
     // Safari detection
     const isSafariCheck = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
@@ -29,6 +30,10 @@ const LandingPage = () => {
        navigator.maxTouchPoints > 2 && 
        /MacIntel/.test(navigator.platform));
     setIsIPad(isIPadCheck);
+    
+    // iPhone detection
+    const isIPhoneCheck = /iPhone|iPod/i.test(navigator.userAgent);
+    setIsIPhone(isIPhoneCheck);
     
     // Handle orientation changes
     const handleResize = () => {
@@ -121,16 +126,19 @@ const LandingPage = () => {
     }
   };
 
-  // Safari-specific class adjustments
+  // Device-specific class adjustments
   const safariFlexClass = isSafari ? 'safari-flex-fix' : '';
   const ipadTouchClass = isIPad ? 'ipad-touch-fix' : '';
-  const orientationClass = isIPad ? (orientation === 'landscape' ? 'ipad-pro-landscape-fix' : 'ipad-pro-portrait-fix') : '';
+  const iphoneTouchClass = isIPhone ? 'iphone-touch-fix' : '';
+  const orientationClass = isIPad ? (orientation === 'landscape' ? 'ipad-landscape-fix' : 'ipad-portrait-fix') : 
+                           isIPhone ? (orientation === 'landscape' ? 'iphone-landscape-fix' : 'iphone-portrait-fix') : '';
   const browserClass = isSafari ? 'safari-spacing' : isChrome ? 'chrome-spacing' : '';
+  const deviceClass = isIPad ? 'ipad-device' : isIPhone ? 'iphone-device' : '';
 
   return (
-    <div className={`w-full bg-white ${orientationClass}`}>
+    <div className="overflow-x-hidden w-full">
       {/* Hero Section */}
-      <section className={`bg-gradient-to-r from-blue-500 to-blue-700 w-full ${ipadTouchClass} safe-padding-top hero-section ${browserClass}`}>
+      <section className={`bg-gradient-to-r from-blue-500 to-blue-700 w-full ${ipadTouchClass} ${iphoneTouchClass} safe-padding-top hero-section ${browserClass}`} style={{ paddingTop: 'calc(env(safe-area-inset-top, 0) + 40px)' }}>
         <div className="container mx-auto px-4 safe-padding-left safe-padding-right">
           <div className={`flex flex-col md:flex-row items-center justify-between gap-8 ${safariFlexClass}`}>
             <div className="w-full md:max-w-xl lg:max-w-2xl mb-8 md:mb-0">
@@ -159,7 +167,7 @@ const LandingPage = () => {
                   />
                   <button
                     type="submit"
-                    className={`px-6 py-3 rounded-lg bg-white text-blue-600 font-medium hover:bg-blue-50 transition-colors ${isLoading ? 'opacity-70 cursor-not-allowed' : ''} ${ipadTouchClass}`}
+                    className={`px-6 py-3 rounded-lg bg-white text-blue-600 font-medium hover:bg-blue-50 transition-colors ${isLoading ? 'opacity-70 cursor-not-allowed' : ''} ${ipadTouchClass} ${iphoneTouchClass}`}
                     disabled={isLoading}
                     style={{
                       WebkitTapHighlightColor: 'transparent'
@@ -221,41 +229,59 @@ const LandingPage = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+          <div className={`food-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 ${isIPad ? 'ipad-grid' : isIPhone ? 'iphone-grid' : ''}`}>
             {foodItems.map((food) => (
-              <div key={food.id} className="rounded-lg overflow-hidden shadow-lg bg-white">
+              <div key={food.id} className={`food-card rounded-lg overflow-hidden shadow-lg bg-white ${isIPad ? 'ipad-card' : isIPhone ? 'iphone-card' : ''}`}>
                 <div className="h-40 sm:h-48 overflow-hidden">
                   <img 
                     src={food.image} 
                     alt={food.title} 
                     className="w-full h-full object-cover"
                     loading="lazy"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
                 </div>
-                <div className="p-4 sm:p-6">
+                <div className="p-4 sm:p-6" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100% - 12rem)', minHeight: '160px' }}>
                   <h3 className="text-lg sm:text-xl font-semibold mb-2 text-gray-900">{food.title}</h3>
                   <p className="text-gray-600 mb-4">{food.description}</p>
-                  <div className="flex justify-between items-center" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div className="nutrition-wrapper flex justify-between items-center mt-auto" style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center', 
+                    width: '100%', 
+                    marginTop: 'auto',
+                    paddingTop: '8px'
+                  }}>
                     <span 
-                      className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm"
+                      className="nutrition-item bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm"
                       style={{ 
                         backgroundColor: '#eff6ff', 
                         color: '#1d4ed8', 
                         borderRadius: '9999px',
                         padding: '0.25rem 0.75rem',
-                        display: 'inline-block'
+                        display: 'inline-block',
+                        maxWidth: '45%',
+                        textAlign: 'center',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
                       }}
                     >
                       {food.calories} calories
                     </span>
                     <span 
-                      className="bg-green-50 text-green-700 px-3 py-1 rounded-full text-sm"
+                      className="nutrition-item bg-green-50 text-green-700 px-3 py-1 rounded-full text-sm"
                       style={{ 
                         backgroundColor: '#f0fdf4', 
                         color: '#15803d', 
                         borderRadius: '9999px',
                         padding: '0.25rem 0.75rem',
-                        display: 'inline-block'
+                        display: 'inline-block',
+                        maxWidth: '45%',
+                        textAlign: 'center',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
                       }}
                     >
                       {food.protein} protein
@@ -278,70 +304,54 @@ const LandingPage = () => {
             </p>
           </div>
 
-          <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 ${safariFlexClass}`}>
-            <div className={`p-4 sm:p-6 bg-blue-50 rounded-lg hardware-accelerated ${ipadTouchClass}`}
+          <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mb-4 ${safariFlexClass} ${isIPad ? 'ipad-features-grid' : isIPhone ? 'iphone-features-grid' : ''}`}>
+            <div className={`p-4 sm:p-6 bg-blue-50 rounded-lg hardware-accelerated feature-card ${ipadTouchClass} ${iphoneTouchClass}`}
                  style={{
                    WebkitTransform: 'translate3d(0, 0, 0)',
                    transform: 'translate3d(0, 0, 0)',
                    WebkitBackfaceVisibility: 'hidden',
                    backfaceVisibility: 'hidden'
                  }}>
-              <div className={`w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center text-white mb-4 ${safariFlexClass}`}>
+              <div className={`w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center text-white mb-4 mx-auto ${safariFlexClass}`}>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               </div>
-              <h3 className="text-lg sm:text-xl font-semibold mb-2 text-gray-900">Capture & Analyze</h3>
-              <p className="text-gray-600 text-sm sm:text-base">Simply snap photos of your meals to automatically log nutritional information such as calorie content and health scores.</p>
+              <h3 className="text-lg sm:text-xl font-semibold mb-2 text-gray-900 text-center">Capture & Analyze</h3>
+              <p className="text-gray-600 text-sm sm:text-base text-center">Simply snap photos of your meals to automatically log nutritional information such as calorie content and health scores.</p>
             </div>
 
-            <div className={`p-4 sm:p-6 bg-blue-50 rounded-lg hardware-accelerated ${ipadTouchClass}`}
+            <div className={`p-4 sm:p-6 bg-blue-50 rounded-lg hardware-accelerated feature-card ${ipadTouchClass} ${iphoneTouchClass}`}
                  style={{
                    WebkitTransform: 'translate3d(0, 0, 0)',
                    transform: 'translate3d(0, 0, 0)',
                    WebkitBackfaceVisibility: 'hidden',
                    backfaceVisibility: 'hidden'
                  }}>
-              <div className={`w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center text-white mb-4 ${safariFlexClass}`}>
+              <div className={`w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center text-white mb-4 mx-auto ${safariFlexClass}`}>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
               </div>
-              <h3 className="text-lg sm:text-xl font-semibold mb-2 text-gray-900">Inventory Tracking</h3>
-              <p className="text-gray-600 text-sm sm:text-base">Keep an organized record of what's in your refrigerator, ensuring you always know what ingredients you have on hand.</p>
+              <h3 className="text-lg sm:text-xl font-semibold mb-2 text-gray-900 text-center">Inventory Tracking</h3>
+              <p className="text-gray-600 text-sm sm:text-base text-center">Keep an organized record of what's in your refrigerator, ensuring you always know what ingredients you have on hand.</p>
             </div>
 
-            <div className={`p-4 sm:p-6 bg-blue-50 rounded-lg hardware-accelerated ${ipadTouchClass}`}
+            <div className={`p-4 sm:p-6 bg-blue-50 rounded-lg hardware-accelerated feature-card ${ipadTouchClass} ${iphoneTouchClass}`}
                  style={{
                    WebkitTransform: 'translate3d(0, 0, 0)',
                    transform: 'translate3d(0, 0, 0)',
                    WebkitBackfaceVisibility: 'hidden',
                    backfaceVisibility: 'hidden'
                  }}>
-              <div className={`w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center text-white mb-4 ${safariFlexClass}`}>
+              <div className={`w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center text-white mb-4 mx-auto ${safariFlexClass}`}>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                 </svg>
               </div>
-              <h3 className="text-lg sm:text-xl font-semibold mb-2 text-gray-900">Recipe Generation</h3>
-              <p className="text-gray-600 text-sm sm:text-base">Get smart recipe suggestions based on your current inventory, making meal planning both creative and efficient.</p>
-            </div>
-
-            <div className={`p-4 sm:p-6 bg-blue-50 rounded-lg hardware-accelerated ${ipadTouchClass}`}
-                 style={{
-                   WebkitTransform: 'translate3d(0, 0, 0)',
-                   transform: 'translate3d(0, 0, 0)',
-                   WebkitBackfaceVisibility: 'hidden',
-                   backfaceVisibility: 'hidden'
-                 }}>
-              <div className={`w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center text-white mb-4 ${safariFlexClass}`}>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <h3 className="text-lg sm:text-xl font-semibold mb-2 text-gray-900">Personalized Planning</h3>
-              <p className="text-gray-600 text-sm sm:text-base">Benefit from AI-driven insights that help you plan balanced meals and monitor your dietary goals with a visual food journal.</p>
+              <h3 className="text-lg sm:text-xl font-semibold mb-2 text-gray-900 text-center">Recipe Generation</h3>
+              <p className="text-gray-600 text-sm sm:text-base text-center">Get smart recipe suggestions based on your current inventory, making meal planning both creative and efficient.</p>
             </div>
           </div>
         </div>
@@ -371,8 +381,66 @@ const LandingPage = () => {
         </div>
       </footer>
 
-      {/* Safari and iPad specific CSS */}
+      {/* Device specific CSS */}
       <style jsx>{`
+        /* Food grid and card styling for all devices */
+        .food-grid {
+          display: grid;
+          grid-template-columns: repeat(1, 1fr);
+          gap: 1.5rem;
+          width: 100%;
+        }
+        
+        /* Add more space to the top of the app */
+        .hero-section {
+          padding-top: calc(env(safe-area-inset-top, 0) + 40px) !important;
+        }
+        
+        /* Even more space for iPhones and smaller devices */
+        @media only screen and (max-width: 428px) {
+          .hero-section {
+            padding-top: calc(env(safe-area-inset-top, 0) + 50px) !important;
+          }
+        }
+        
+        @media (min-width: 640px) {
+          .food-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+        }
+        
+        @media (min-width: 1024px) {
+          .food-grid {
+            grid-template-columns: repeat(3, 1fr);
+          }
+        }
+        
+        .food-card {
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+          background-color: white;
+          border-radius: 0.5rem;
+          overflow: hidden;
+          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .nutrition-wrapper {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          width: 100%;
+          margin-top: auto;
+        }
+        
+        .nutrition-item {
+          display: inline-block;
+          border-radius: 9999px;
+          padding: 0.25rem 0.75rem;
+          font-size: 0.875rem;
+          line-height: 1.25rem;
+        }
+        
         /* Nutrition info styling for all browsers */
         .bg-blue-50 {
           background-color: #eff6ff !important;
@@ -403,135 +471,146 @@ const LandingPage = () => {
           -webkit-align-items: center;
         }
         
-        /* iPad touch optimizations */
-        .ipad-touch-fix {
-          cursor: pointer;
-          -webkit-tap-highlight-color: transparent;
-        }
-        
-        /* Fix for Safari transitions */
-        @supports (-webkit-touch-callout: none) {
-          .transition-transform {
-            -webkit-transition: -webkit-transform 0.3s ease;
-            transition: -webkit-transform 0.3s ease;
+        /* iPad specific fixes */
+        @media only screen and (min-device-width: 768px) and (max-device-width: 1024px) {
+          /* Add extra padding to the body to account for fixed header */
+          body {
+            padding-top: 60px !important;
           }
           
-          .hover\:-translate-y-2:hover {
-            -webkit-transform: translateY(-0.5rem);
-            transform: translateY(-0.5rem);
-          }
-        }
-        
-        /* Fix for Safari image transitions */
-        @supports (-webkit-touch-callout: none) {
-          .hover\:scale-110:hover {
-            -webkit-transform: scale(1.1);
-            transform: scale(1.1);
-          }
-        }
-        
-        /* Fade-in animation for Safari */
-        .fade-in {
-          -webkit-animation: fadeIn 0.5s ease-in;
-          animation: fadeIn 0.5s ease-in;
-        }
-        
-        @-webkit-keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        
-        /* Browser-specific adjustments */
-        .safari-spacing {
-          /* Safari already has the correct spacing, so we keep it as is */
-        }
-        
-        .chrome-spacing {
-          /* Chrome-specific adjustments are now in global.css */
-        }
-        
-        /* Safari-specific grid fixes */
-        @supports (-webkit-touch-callout: none) {
-          .grid {
-            display: -webkit-box;
-            display: -webkit-flex;
-            display: flex;
-            -webkit-flex-wrap: wrap;
-            flex-wrap: wrap;
-            margin: -0.5rem;
+          /* iPad grid layouts */
+          .ipad-grid {
+            display: grid !important;
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 16px !important;
           }
           
-          .grid-cols-1 {
-            -webkit-box-orient: vertical;
-            -webkit-box-direction: normal;
-            -webkit-flex-direction: column;
-            flex-direction: column;
-          }
-          
-          .grid-cols-1 > * {
-            width: 100%;
-            margin: 0.5rem;
-            -webkit-box-flex: 0;
-            -webkit-flex: 0 0 auto;
-            flex: 0 0 auto;
-          }
-          
-          .sm\:grid-cols-2 {
-            -webkit-flex-direction: row;
-            flex-direction: row;
-          }
-          
-          .sm\:grid-cols-2 > * {
-            width: calc(50% - 1rem);
-            margin: 0.5rem;
-            -webkit-box-flex: 0;
-            -webkit-flex: 0 0 auto;
-            flex: 0 0 auto;
-          }
-          
-          .lg\:grid-cols-3 > * {
-            width: calc(33.333% - 1rem);
-            margin: 0.5rem;
-            -webkit-box-flex: 0;
-            -webkit-flex: 0 0 auto;
-            flex: 0 0 auto;
-          }
-          
-          /* Fix for Safari card layout */
-          @media (max-width: 639px) {
-            .grid-cols-1 > * {
-              width: 100%;
+          /* iPad landscape mode */
+          @media (orientation: landscape) {
+            .ipad-grid {
+              grid-template-columns: repeat(3, 1fr) !important;
+            }
+            
+            .ipad-landscape-fix {
+              padding-top: 80px !important;
             }
           }
           
-          @media (min-width: 640px) and (max-width: 1023px) {
-            .sm\:grid-cols-2 > * {
-              width: calc(50% - 1rem);
+          /* iPad portrait mode */
+          @media (orientation: portrait) {
+            .ipad-portrait-fix {
+              padding-top: 80px !important;
             }
           }
           
-          @media (min-width: 1024px) {
-            .lg\:grid-cols-3 > * {
-              width: calc(33.333% - 1rem);
+          /* Better tapping for iPad */
+          .ipad-touch-fix {
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+          }
+          
+          /* Better card handling */
+          .ipad-card {
+            min-height: 360px !important;
+          }
+          
+          /* Features grid for iPad */
+          .ipad-features-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+          }
+        }
+        
+        /* iPhone specific fixes */
+        @media only screen and (max-width: 428px) {
+          /* iPhone grid layouts */
+          .iphone-grid {
+            display: grid !important;
+            grid-template-columns: 1fr !important;
+            gap: 16px !important;
+          }
+          
+          /* Additional top spacing for iPhone */
+          body {
+            padding-top: 20px !important; /* Base padding for all iPhone screens */
+          }
+          
+          /* iPhone landscape mode */
+          @media (orientation: landscape) {
+            .iphone-grid {
+              grid-template-columns: repeat(2, 1fr) !important;
+            }
+            
+            .iphone-landscape-fix {
+              padding-top: 60px !important;
             }
           }
-        }
-        
-        /* iPad orientation specific styles */
-        @media screen and (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
-          .ipad-portrait-specific {
-            padding: 0 5%;
+          
+          /* iPhone portrait mode */
+          @media (orientation: portrait) {
+            .iphone-portrait-fix {
+              padding-top: 60px !important;
+            }
+            
+            /* Extra space for the notch area on newer iPhones */
+            .hero-section {
+              padding-top: calc(env(safe-area-inset-top, 20px) + 60px) !important;
+            }
+          }
+          
+          /* Better tapping for iPhone */
+          .iphone-touch-fix {
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            min-height: 44px; /* Apple's recommendation for touch targets */
+          }
+          
+          /* Better card handling */
+          .iphone-card {
+            min-height: 340px !important;
+          }
+          
+          /* Features grid for iPhone */
+          .iphone-features-grid {
+            grid-template-columns: 1fr !important;
+          }
+          
+          /* Better form controls for iPhone */
+          input[type="email"],
+          button[type="submit"] {
+            font-size: 16px !important; /* Prevents zoom on iPhone */
+            padding: 12px 16px !important;
+            border-radius: 8px !important;
           }
         }
         
-        @media screen and (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
-          .ipad-landscape-specific {
-            padding: 0 10%;
+        /* Handle iOS safe areas for notched devices */
+        @supports (padding-top: env(safe-area-inset-top)) {
+          .safe-padding-top {
+            padding-top: env(safe-area-inset-top, 0);
+          }
+          
+          /* Enhanced safe area handling for hero section */
+          .hero-section.safe-padding-top {
+            padding-top: calc(env(safe-area-inset-top, 20px) + 40px) !important;
+          }
+          
+          /* Ensure notch area is always handled properly */
+          @media only screen and (max-width: 428px) {
+            .hero-section.safe-padding-top {
+              padding-top: calc(env(safe-area-inset-top, 20px) + 60px) !important;
+            }
+          }
+          
+          .safe-padding-bottom {
+            padding-bottom: env(safe-area-inset-bottom, 0);
+          }
+          
+          .safe-padding-left {
+            padding-left: env(safe-area-inset-left, 1rem);
+          }
+          
+          .safe-padding-right {
+            padding-right: env(safe-area-inset-right, 1rem);
           }
         }
       `}</style>
