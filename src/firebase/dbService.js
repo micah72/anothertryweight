@@ -10,7 +10,9 @@ import {
   orderBy,
   onSnapshot,
   serverTimestamp,
-  limit
+  limit,
+  getDoc,
+  setDoc
 } from 'firebase/firestore';
 import { db } from './config';
 
@@ -179,33 +181,27 @@ const dbService = {
   // User profile operations
   updateUserProfile: async (userId, data) => {
     try {
-      if (!userId) {
-        throw new Error('No user ID provided');
-      }
+      const userDocRef = doc(db, 'users', userId);
+      const userDoc = await getDoc(userDocRef);
       
-      const userQuery = query(collection(db, 'users'), where('userId', '==', userId));
-      const querySnapshot = await getDocs(userQuery);
-
-      const userData = {
-        ...data,
-        updated_at: serverTimestamp()
-      };
-
-      if (querySnapshot.empty) {
-        // Create new user profile
-        await addDoc(collection(db, 'users'), {
-          userId,
-          ...userData,
-          created_at: serverTimestamp()
+      if (userDoc.exists()) {
+        // User exists, update their profile
+        await updateDoc(userDocRef, {
+          ...data,
+          updated_at: new Date().toISOString()
         });
       } else {
-        // Update existing profile
-        const userDoc = querySnapshot.docs[0];
-        await updateDoc(doc(db, 'users', userDoc.id), userData);
+        // User doesn't exist, create their profile
+        await setDoc(userDocRef, {
+          ...data,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
       }
+      
       return true;
     } catch (error) {
-      console.error('Error updating user profile:', error);
+      console.error(`Error updating profile for user ${userId}:`, error);
       throw error;
     }
   },
@@ -379,23 +375,128 @@ const dbService = {
       const endOfDay = new Date(date);
       endOfDay.setHours(23, 59, 59, 999);
 
-      const q = query(
-        collection(db, 'mealPlans'),
-        where('userId', '==', userId),
-        where('date', '>=', startOfDay),
-        where('date', '<=', endOfDay),
-        orderBy('date', 'asc')
-      );
-      
-      const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      // Try the optimized query first with composite index
+      try {
+        const q = query(
+          collection(db, 'mealPlans'),
+          where('userId', '==', userId),
+          where('date', '>=', startOfDay),
+          where('date', '<=', endOfDay),
+          orderBy('date', 'asc')
+        );
+        
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+      } catch (indexError) {
+        // If we get a failed-precondition error, it means the composite index doesn't exist
+        if (indexError.code === 'failed-precondition') {
+          console.warn('Composite index not found, falling back to simpler query');
+          
+          // Fallback to a simpler query that doesn't require the composite index
+          const simpleQuery = query(
+            collection(db, 'mealPlans'),
+            where('userId', '==', userId)
+          );
+          
+          const querySnapshot = await getDocs(simpleQuery);
+          
+          // Filter the results in memory
+          const filteredDocs = querySnapshot.docs.filter(doc => {
+            try {
+              const docData = doc.data();
+              if (!docData.date) return false;
+              
+              // Handle different date formats
+              let mealDate;
+              if (docData.date instanceof Date) {
+                mealDate = docData.date;
+              } else if (docData.date.toDate && typeof docData.date.toDate === 'function') {
+                mealDate = docData.date.toDate();
+              } else if (typeof docData.date === 'string') {
+                mealDate = new Date(docData.date);
+              } else {
+                return false; // Skip invalid dates
+              }
+              
+              return mealDate >= startOfDay && mealDate <= endOfDay;
+            } catch (err) {
+              console.warn('Error filtering meal date:', err);
+              return false;
+            }
+          });
+          
+          // Sort the results in memory
+          filteredDocs.sort((a, b) => {
+            try {
+              const aData = a.data();
+              const bData = b.data();
+              
+              // Handle different date formats
+              let dateA, dateB;
+              
+              if (aData.date instanceof Date) {
+                dateA = aData.date;
+              } else if (aData.date.toDate && typeof aData.date.toDate === 'function') {
+                dateA = aData.date.toDate();
+              } else if (typeof aData.date === 'string') {
+                dateA = new Date(aData.date);
+              } else {
+                dateA = new Date(0); // Default for invalid dates
+              }
+              
+              if (bData.date instanceof Date) {
+                dateB = bData.date;
+              } else if (bData.date.toDate && typeof bData.date.toDate === 'function') {
+                dateB = bData.date.toDate();
+              } else if (typeof bData.date === 'string') {
+                dateB = new Date(bData.date);
+              } else {
+                dateB = new Date(0); // Default for invalid dates
+              }
+              
+              return dateA - dateB;
+            } catch (err) {
+              console.warn('Error sorting meal dates:', err);
+              return 0;
+            }
+          });
+          
+          return filteredDocs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+        } else {
+          // If it's a different error, rethrow it
+          throw indexError;
+        }
+      }
     } catch (error) {
       console.error('Error getting meal plans:', error);
-      throw error;
+      // Return empty array instead of throwing to prevent cascading errors
+      return [];
     }
+  },
+  
+  // Helper method to safely convert Firestore dates to JavaScript Date objects
+  convertFirestoreDate: (firestoreDate) => {
+    if (!firestoreDate) return null;
+    
+    try {
+      if (firestoreDate instanceof Date) {
+        return firestoreDate;
+      } else if (firestoreDate.toDate && typeof firestoreDate.toDate === 'function') {
+        return firestoreDate.toDate();
+      } else if (typeof firestoreDate === 'string') {
+        return new Date(firestoreDate);
+      }
+    } catch (error) {
+      console.error('Error converting Firestore date:', error);
+    }
+    
+    return null;
   },
 
   updateMealPlan: async (planId, data) => {

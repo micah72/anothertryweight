@@ -12,8 +12,11 @@ service cloud.firestore {
     }
     
     function isApprovedUser() {
-      return isSignedIn() && 
-        (isAdmin() || exists(/databases/$(database)/documents/approved_users/$(request.auth.uid)));
+      // Consider any authenticated user as approved for now
+      return isSignedIn();
+      // Original strict check:
+      // return isSignedIn() && 
+      //  (isAdmin() || exists(/databases/$(database)/documents/approved_users/$(request.auth.uid)));
     }
     
     // Global rules
@@ -21,9 +24,10 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
     
-    // Waitlist collection - admin only
+    // Waitlist collection - allow anyone to create entries, only admin can read and update/delete
     match /waitlist/{document=**} {
-      allow read, write: if isAdmin();
+      allow read, update, delete: if isAdmin();
+      allow create: if true; // Allow anyone to join the waitlist
     }
     
     // Approved users collection - admin can read/write, users can read their own data
@@ -34,7 +38,7 @@ service cloud.firestore {
     
     // Food entries - users can read/write their own entries
     match /foodEntries/{entryId} {
-      allow read, write: if isApprovedUser() && 
+      allow read, write: if isSignedIn() && 
         (resource == null || resource.data.userId == request.auth.uid || isAdmin());
     }
     
@@ -46,13 +50,19 @@ service cloud.firestore {
     
     // Goals - users can read/write their own goals
     match /goals/{goalId} {
-      allow read, write: if isApprovedUser() && 
+      allow read, write: if isSignedIn() && 
         (resource == null || resource.data.userId == request.auth.uid || isAdmin());
     }
     
     // Meal plans - users can read/write their own meal plans
     match /mealPlans/{planId} {
-      allow read, write: if isApprovedUser() && 
+      allow read, write: if isSignedIn() && 
+        (resource == null || resource.data.userId == request.auth.uid || isAdmin());
+    }
+    
+    // Refrigerator items - users can read/write their own items
+    match /refrigerator/{itemId} {
+      allow read, write: if isSignedIn() && 
         (resource == null || resource.data.userId == request.auth.uid || isAdmin());
     }
   }

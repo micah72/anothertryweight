@@ -24,6 +24,7 @@ const Navigation = () => {
   
   // Determine if user is logged in based on auth context
   const isLoggedIn = !!user;
+  const userIsAdmin = isAdmin;
 
   // Handle logout
   const handleLogout = async (e) => {
@@ -53,7 +54,7 @@ const Navigation = () => {
       path: '/',
       icon: <Home size={20} />,
       alwaysShow: true,
-      hideWhenAdmin: true
+      hideWhenLoggedIn: false
     },
     {
       label: 'About',
@@ -62,14 +63,23 @@ const Navigation = () => {
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>,
       alwaysShow: true,
-      hideWhenAdmin: true
+      hideWhenLoggedIn: true
+    },
+    {
+      label: 'Admin Dashboard',
+      path: '/admin-dashboard',
+      icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+      </svg>,
+      adminOnly: true,
+      requiresAuth: true
     },
     {
       label: 'Stay Healthy',
       path: '/stay-healthy',
       icon: <Activity size={20} />,
       alwaysShow: true,
-      hideWhenAdmin: true
+      hideWhenLoggedIn: true
     },
     {
       label: 'Contact Us',
@@ -78,7 +88,7 @@ const Navigation = () => {
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
       </svg>,
       alwaysShow: true,
-      hideWhenAdmin: true
+      hideWhenLoggedIn: true
     },
     {
       label: 'Food Gallery',
@@ -163,14 +173,6 @@ const Navigation = () => {
       requiresAuth: true
     },
     {
-      label: 'Admin Dashboard',
-      path: '/admin-dashboard',
-      icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-      </svg>,
-      adminOnly: true
-    },
-    {
       label: 'Logout',
       action: handleLogout,
       icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -190,10 +192,21 @@ const Navigation = () => {
 
   // Filter menu items based on authentication status
   const filteredMenu = menuItems.filter(item => {
-    if (isAdmin && item.adminOnly) return true;
-    if (item.alwaysShow && (!isAdmin || !item.hideWhenAdmin)) return true;
-    if (isLoggedIn && item.requiresAuth && (!item.adminOnly || isAdmin)) return true;
+    // Hide items that should be hidden when logged in
+    if (isLoggedIn && item.hideWhenLoggedIn) return false;
+    
+    // Admin can see admin-only items
+    if (userIsAdmin && item.adminOnly) return true;
+    
+    // Show items marked for always showing unless admin and item should hide for admin
+    if (item.alwaysShow && (!userIsAdmin || !item.hideWhenAdmin)) return true;
+    
+    // Show items requiring auth if user is logged in
+    if (isLoggedIn && item.requiresAuth && (!item.adminOnly || userIsAdmin)) return true;
+    
+    // Show items marked for showing when logged out if user is not logged in
     if (!isLoggedIn && item.showWhenLoggedOut) return true;
+    
     return false;
   });
 
@@ -263,15 +276,15 @@ const Navigation = () => {
   }, [user]);
 
   return (
-    <nav className="bg-blue-500 shadow-md w-full sticky top-0 z-50">
+    <nav className="bg-blue-500 safe-area-top w-full sticky top-0 z-50 nav-container">
       <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
-        <div className="flex justify-between h-16">
+        <div className="flex justify-between h-16 border-none">
           {/* Logo and brand */}
           <div className="flex-shrink-0 flex items-center">
             <Link to="/" className="text-white text-lg sm:text-xl font-bold site-logo">
               SnapLicious AI
             </Link>
-            {isLoggedIn && isAdmin && (
+            {isLoggedIn && userIsAdmin && (
               <span className="ml-2 bg-yellow-400 text-blue-800 text-xs px-2 py-0.5 rounded-full font-semibold">
                 Admin
               </span>
@@ -547,6 +560,48 @@ const Navigation = () => {
           .mobile-menu-button {
             -webkit-tap-highlight-color: transparent;
           }
+        }
+
+        /* Mobile header background fixes */
+        .safe-area-top {
+          padding-top: env(safe-area-inset-top);
+          background-color: #3d7fef !important;
+          box-shadow: none !important;
+          border-bottom: none !important;
+        }
+
+        /* This makes all child elements of the header inherit the blue background */
+        .safe-area-top > * {
+          background-color: #3d7fef !important;
+        }
+
+        /* Fix for iOS status bar */
+        @supports (-webkit-touch-callout: none) {
+          /* iOS only */
+          .safe-area-top {
+            padding-top: env(safe-area-inset-top);
+          }
+        }
+
+        /* Remove any white dividers or borders in the header area */
+        .header-container hr,
+        .header-container .divider,
+        .nav-container::after,
+        .nav-container::before {
+          display: none !important;
+          border: none !important;
+          box-shadow: none !important;
+        }
+        
+        /* Ensure no border or line appears below the header */
+        .nav-container {
+          border-bottom: none !important;
+          box-shadow: none !important;
+        }
+        
+        /* Remove any borders from direct children */
+        .nav-container > div {
+          border-bottom: none !important;
         }
       `}</style>
     </nav>

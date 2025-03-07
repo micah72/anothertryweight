@@ -12,7 +12,12 @@ const AdminLogin = () => {
 
   useEffect(() => {
     // If already logged in as admin, redirect to admin dashboard
+    console.log('AdminLogin useEffect - user:', user);
+    console.log('AdminLogin useEffect - isAdmin exists:', !!isAdmin);
+    console.log('AdminLogin useEffect - isAdmin result:', isAdmin);
+    
     if (user && isAdmin) {
+      console.log('AdminLogin - Redirecting to admin dashboard');
       navigate('/admin-dashboard');
     }
   }, [user, isAdmin, navigate]);
@@ -25,7 +30,12 @@ const AdminLogin = () => {
       setLoading(true);
       await login(email, password);
       
-      // Redirect will happen in the useEffect
+      // Force navigation to admin dashboard after successful login
+      // This is a backup in case the useEffect doesn't trigger
+      if (isAdmin) {
+        console.log('AdminLogin handleSubmit - Redirecting to admin dashboard');
+        navigate('/admin-dashboard');
+      }
     } catch (err) {
       console.error('Login error:', err);
       if (err.message === 'Your account has not been approved yet.') {

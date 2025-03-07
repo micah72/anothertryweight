@@ -1,7 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { db } from '../firebase/config';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db, auth } from '../firebase/config';
+import { collection, addDoc, serverTimestamp, doc, setDoc, updateDoc } from 'firebase/firestore';
+import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { CheckCircle2 } from 'lucide-react';
+import { ArrowRight, ChevronDown } from 'lucide-react';
+import LoadingSpinner from './LoadingSpinner';
 
 const LandingPage = () => {
   const [email, setEmail] = useState('');
@@ -13,6 +17,7 @@ const LandingPage = () => {
   const [isIPhone, setIsIPhone] = useState(false);
   const [isChrome, setIsChrome] = useState(false);
   const [orientation, setOrientation] = useState(window.innerWidth > window.innerHeight ? 'landscape' : 'portrait');
+  const [successMessage, setSuccessMessage] = useState('Thank you for joining our waitlist!');
 
   // Detect Safari, iPad, and iPhone on component mount
   useEffect(() => {
@@ -109,21 +114,93 @@ const LandingPage = () => {
     setError('');
     
     try {
+      console.log('Adding email to waitlist:', email);
+      
       // Save the email to Firebase
-      await addDoc(collection(db, 'waitlist'), {
+      const docRef = await addDoc(collection(db, 'waitlist'), {
         email: email,
         timestamp: serverTimestamp(),
-        status: 'pending' // You can use this to track status (pending, contacted, etc.)
+        status: 'pending', // You can use this to track status (pending, contacted, etc.)
+        createdAt: new Date() // Add a regular Date object as backup
       });
       
+      console.log('Document written with ID: ', docRef.id);
       setIsSubmitted(true);
+      
+      // Now generate a temporary password for testing purposes
+      const tempPassword = generateSimplePassword();
+      
+      try {
+        // Create a Firebase Auth account for this user so they can login immediately
+        // This bypasses the normal admin approval process for testing
+        await createUserWithEmailAndPassword(auth, email, tempPassword);
+        
+        // Add to approved_users collection
+        await setDoc(doc(db, 'approved_users', auth.currentUser.uid), {
+          email: email,
+          approvedAt: new Date(),
+          waitlistId: docRef.id,
+          isApproved: true,
+          tempPassword: tempPassword,
+          passwordCreatedAt: new Date().toISOString()
+        });
+        
+        // Add to users collection
+        await setDoc(doc(db, 'users', auth.currentUser.uid), {
+          email: email,
+          created_at: new Date(),
+          updated_at: new Date(),
+          role: 'regular',
+          isApproved: true,
+          tempPassword: tempPassword,
+          passwordCreatedAt: new Date().toISOString()
+        });
+        
+        // Update waitlist entry
+        await updateDoc(doc(db, 'waitlist', docRef.id), {
+          status: 'registered',
+          approvedAt: new Date(),
+          registeredAt: new Date(),
+          uid: auth.currentUser.uid,
+          tempPassword: tempPassword,
+          lastUsedPassword: tempPassword,
+          passwordCreatedAt: new Date().toISOString()
+        });
+        
+        // Sign out so user can login with their credentials
+        await signOut(auth);
+        
+        // Update success message to include the password
+        setSuccessMessage(`Thank you for joining our waitlist! For testing purposes, you can log in immediately with your email and this temporary password: ${tempPassword}`);
+      } catch (authError) {
+        console.error('Error creating test user account:', authError);
+        // Still show success for waitlist sign-up
+        setSuccessMessage('Thank you for joining our waitlist! An administrator will approve your account soon.');
+      }
+      
       setEmail('');
     } catch (error) {
       console.error('Error adding email to waitlist:', error);
-      setError('Failed to join waitlist. Please try again.');
+      setError(`Failed to join waitlist: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
+  };
+  
+  // Generate a simple password that meets Firebase requirements
+  const generateSimplePassword = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let password = '';
+    
+    // Generate at least 8 characters
+    for (let i = 0; i < 10; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    
+    // Ensure we have at least one number and one uppercase letter for Firebase requirements
+    password += 'A1';
+    
+    return password;
   };
 
   // Device-specific class adjustments
@@ -138,7 +215,7 @@ const LandingPage = () => {
   return (
     <div className="overflow-x-hidden w-full">
       {/* Hero Section */}
-      <section className={`bg-gradient-to-r from-blue-500 to-blue-700 w-full ${ipadTouchClass} ${iphoneTouchClass} safe-padding-top hero-section ${browserClass}`} style={{ paddingTop: 'calc(env(safe-area-inset-top, 0) + 40px)' }}>
+      <section className={`bg-gradient-to-r from-blue-500 to-blue-700 w-full ${ipadTouchClass} ${iphoneTouchClass} safe-padding-top hero-section ${browserClass}`}>
         <div className="container mx-auto px-4 safe-padding-left safe-padding-right">
           <div className={`flex flex-col md:flex-row items-center justify-between gap-8 ${safariFlexClass}`}>
             <div className="w-full md:max-w-xl lg:max-w-2xl mb-8 md:mb-0">
@@ -194,8 +271,12 @@ const LandingPage = () => {
               </form>
 
               {isSubmitted && (
-                <div className="text-white bg-blue-600/30 px-4 py-3 rounded-lg mb-6 fade-in">
-                  Thanks for joining! We'll notify you when we launch.
+                <div className="text-center max-w-md mx-auto bg-green-50 p-4 rounded-lg shadow mt-8">
+                  <h3 className="text-xl font-bold text-green-800 mb-2">
+                    <CheckCircle2 className="inline-block mr-2" size={24} />
+                    Success!
+                  </h3>
+                  <p className="text-green-700">{successMessage}</p>
                 </div>
               )}
 
@@ -357,32 +438,8 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Footer Section */}
-      <footer className="bg-gray-900 text-white py-8 sm:py-12 w-full safe-padding-bottom">
-        <div className="container mx-auto px-4 safe-padding-left safe-padding-right">
-          <div className={`flex flex-col md:flex-row justify-between items-center ${safariFlexClass}`}>
-            <div className="mb-6 md:mb-0">
-              <h2 className="text-xl sm:text-2xl font-bold">SnapLicious AI</h2>
-              <p className="text-gray-400 mt-2">Snap, Analyze, Plan</p>
-            </div>
-
-            <div className={`flex flex-wrap justify-center gap-4 sm:gap-6 ${safariFlexClass}`}>
-              <Link to="/" className="hover:text-blue-400 transition-colors">Home</Link>
-              <Link to="/admin/login" className="hover:text-blue-400 transition-colors">Admin</Link>
-              <a href="#" className="hover:text-blue-400 transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-blue-400 transition-colors">Terms of Service</a>
-            </div>
-          </div>
-
-          <div className="border-t border-gray-800 mt-6 sm:mt-8 pt-6 sm:pt-8 text-center text-gray-400">
-            <p>&copy; {new Date().getFullYear()} SnapLicious AI. All rights reserved.</p>
-            <p className="mt-2 text-xs sm:text-sm">*AI Forward: Leveraging cutting-edge artificial intelligence to provide smarter health insights through photography and meal planning.</p>
-          </div>
-        </div>
-      </footer>
-
       {/* Device specific CSS */}
-      <style jsx>{`
+      <style>{`
         /* Food grid and card styling for all devices */
         .food-grid {
           display: grid;
@@ -611,6 +668,41 @@ const LandingPage = () => {
           
           .safe-padding-right {
             padding-right: env(safe-area-inset-right, 1rem);
+          }
+        }
+
+        /* Mobile-specific fixes for the landing page */
+        .landing-container {
+          background-color: #3d7fef;
+        }
+
+        /* Ensure the header extends to the top of the screen on mobile */
+        .landing-header {
+          padding-top: env(safe-area-inset-top);
+          background-color: #3d7fef !important;
+          margin-top: -1px; /* Fix small gap sometimes seen on mobile */
+        }
+
+        /* Remove any white borders or dividers */
+        .landing-header div {
+          border: none !important;
+        }
+
+        /* Media query for mobile devices */
+        @media (max-width: 767px) {
+          .landing-page {
+            background-color: #3d7fef;
+          }
+          
+          /* Fix for iPhone notch area */
+          .notch-area-fix {
+            background-color: #3d7fef !important;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: env(safe-area-inset-top);
+            z-index: 9999;
           }
         }
       `}</style>

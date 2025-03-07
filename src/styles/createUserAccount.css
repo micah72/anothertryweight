@@ -1,0 +1,48 @@
+/* Mobile UI fixes for white spaces */
+
+/* Fix for status bar area at the top */
+.status-bar {
+  background-color: #4285F4; /* Match the blue gradient color */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top);
+  z-index: 1000;
+}
+
+/* Fix for white input area below the app name */
+.hero-section input {
+  background-color: #4285F4 !important; /* Match the blue background */
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Fix for iOS devices with notches */
+@supports (padding: max(0px)) {
+  .ios-device .status-bar {
+    height: max(env(safe-area-inset-top), 20px);
+    background-color: #4285F4;
+  }
+  
+  /* Ensure the input field matches the blue background on mobile */
+  .ios-device .hero-section input {
+    background-color: #4285F4 !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+  }
+}
+
+/* Additional fixes for Safari */
+@supports (-webkit-touch-callout: none) {
+  .status-bar {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background-color: #4285F4;
+  }
+  
+  .hero-section input {
+    -webkit-appearance: none;
+    appearance: none;
+    background-color: #4285F4 !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+  }
+}

@@ -1,6 +1,14 @@
 class OpenAIService {
   constructor() {
-    const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+    // Get API key from environment variables or use a default for development
+    let apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+    
+    // Use a default placeholder key for development if none is provided
+    if (import.meta.env.DEV && (!apiKey || apiKey === 'undefined' || apiKey === 'your_openai_api_key_here')) {
+      console.warn('Using development mode with mock responses for OpenAI service');
+      apiKey = 'dev_mode_mock_key_for_testing';
+      this.useMockData = true;
+    }
     
     if (!apiKey || apiKey === 'undefined' || apiKey === 'your_openai_api_key_here') {
       this.configurationError = new Error('API_NOT_CONFIGURED');
@@ -15,7 +23,7 @@ class OpenAIService {
         '3. Restart your development server\n\n' +
         'Note: You need a valid OpenAI API key for image analysis features to work.'
       );
-    } else if (!apiKey.startsWith('sk-') || apiKey.length < 20) {
+    } else if (!this.useMockData && (!apiKey.startsWith('sk-') || apiKey.length < 20)) {
       this.configurationError = new Error('INVALID_API_KEY_FORMAT');
       console.error(
         '%c Invalid OpenAI API key format. %c\n\nThe key should:', 
@@ -36,7 +44,8 @@ class OpenAIService {
   }
 
   isConfigured() {
-    return !this.configurationError && this.apiKey;
+    // Always return true in development mode with mock data
+    return this.useMockData || (!this.configurationError && this.apiKey);
   }
 
   getConfigurationError() {
@@ -85,38 +94,97 @@ class OpenAIService {
   async generateFoodRecommendations(context) {
     if (!this.isConfigured()) {
       // For demo purposes, we could return mock data if in development mode
-      if (import.meta.env.DEV) {
+      if (import.meta.env.DEV || this.useMockData) {
         console.warn('Using mock data because OpenAI API is not configured.');
         return {
           meals: [
             {
               name: "Grilled Chicken Salad",
-              description: "A healthy salad with grilled chicken and mixed vegetables",
+              description: "A healthy salad with grilled chicken, mixed greens, and a light vinaigrette dressing",
               calories: 350,
-              ingredients: ["Chicken breast", "Lettuce", "Tomatoes", "Cucumber", "Olive oil"]
+              ingredients: ["Chicken breast", "Mixed greens", "Tomatoes", "Cucumber", "Red onion", "Olive oil", "Balsamic vinegar"]
+            },
+            {
+              name: "Vegetable Stir Fry with Tofu",
+              description: "A protein-packed vegetarian stir fry with colorful vegetables and tofu",
+              calories: 400,
+              ingredients: ["Tofu", "Broccoli", "Bell peppers", "Carrots", "Snow peas", "Soy sauce", "Ginger", "Garlic"]
+            },
+            {
+              name: "Salmon with Roasted Vegetables",
+              description: "Oven-baked salmon fillet with a medley of roasted seasonal vegetables",
+              calories: 450,
+              ingredients: ["Salmon fillet", "Zucchini", "Bell peppers", "Cherry tomatoes", "Red onion", "Olive oil", "Lemon", "Herbs"]
+            },
+            {
+              name: "Greek Yogurt Parfait",
+              description: "A protein-rich breakfast or snack with layers of yogurt, fruit, and granola",
+              calories: 300,
+              ingredients: ["Greek yogurt", "Berries", "Banana", "Granola", "Honey", "Chia seeds"]
             }
           ],
           nutritionalGaps: [
             {
               nutrient: "Vitamin D",
-              recommendation: "Consider adding more dairy and fatty fish to your diet"
+              recommendation: "Consider adding more dairy, fatty fish, and egg yolks to your diet, or get more sun exposure"
+            },
+            {
+              nutrient: "Omega-3 Fatty Acids",
+              recommendation: "Include more fatty fish (salmon, mackerel, sardines), walnuts, and flaxseeds in your meals"
+            },
+            {
+              nutrient: "Fiber",
+              recommendation: "Increase your intake of whole grains, legumes, fruits, and vegetables for better digestive health"
             }
           ],
           mealPlan: {
             "Monday": [
               {
-                name: "Oatmeal with Berries",
-                calories: 250
+                name: "Oatmeal with Berries and Nuts",
+                calories: 350
               },
               {
-                name: "Grilled Chicken Salad",
+                name: "Quinoa Bowl with Roasted Vegetables",
+                calories: 450
+              },
+              {
+                name: "Grilled Chicken with Sweet Potato",
+                calories: 500
+              }
+            ],
+            "Tuesday": [
+              {
+                name: "Greek Yogurt Parfait",
+                calories: 300
+              },
+              {
+                name: "Mediterranean Wrap",
+                calories: 400
+              },
+              {
+                name: "Salmon with Roasted Vegetables",
+                calories: 450
+              }
+            ],
+            "Wednesday": [
+              {
+                name: "Veggie Omelette with Whole Grain Toast",
                 calories: 350
+              },
+              {
+                name: "Lentil Soup with Side Salad",
+                calories: 400
+              },
+              {
+                name: "Turkey Meatballs with Zucchini Noodles",
+                calories: 450
               }
             ]
           }
         };
       }
-      throw new Error('OpenAI API is not properly configured. ' + this.getConfigurationError());
+      
+      throw this.getConfigurationError();
     }
 
     try {
@@ -162,7 +230,7 @@ class OpenAIService {
   async analyzeImage(base64Image) {
     if (!this.isConfigured()) {
       // For demo purposes, we could return mock data if in development mode
-      if (import.meta.env.DEV) {
+      if (import.meta.env.DEV || this.useMockData) {
         console.warn('Using mock data because OpenAI API is not configured.');
         return this.getMockAnalysisData();
       }
@@ -229,7 +297,7 @@ class OpenAIService {
   async analyzeRefrigeratorImage(base64Image) {
     if (!this.isConfigured()) {
       // For demo purposes, we could return mock data if in development mode
-      if (import.meta.env.DEV) {
+      if (import.meta.env.DEV || this.useMockData) {
         console.warn('Using mock data because OpenAI API is not configured.');
         return this.getMockRefrigeratorData();
       }
@@ -480,6 +548,222 @@ Please provide recommendations in the following JSON format:
       default:
         return `OpenAI API error: ${status}`;
     }
+  }
+  
+  // Generate AI meal plan based on refrigerator contents and past meal choices
+  async generateAIMealPlan(refrigeratorItems, pastMeals, mealType, calorieTarget) {
+    if (!this.isConfigured()) {
+      // For demo purposes, return mock data if in development mode
+      if (import.meta.env.DEV || this.useMockData) {
+        console.warn('Using mock data because OpenAI API is not configured.');
+        return {
+          name: mealType,
+          time: '12:00',
+          calories: calorieTarget || 500,
+          notes: `AI suggested ${mealType.toLowerCase()} using ${refrigeratorItems.slice(0, 3).join(', ')}`,
+          ingredients: refrigeratorItems.slice(0, 5),
+          recipe: "Mock recipe description based on your available ingredients."
+        };
+      }
+      
+      throw this.getConfigurationError();
+    }
+
+    try {
+      const prompt = this.buildMealPlanPrompt(refrigeratorItems, pastMeals, mealType, calorieTarget);
+      
+      const response = await fetch(this.apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              role: "system",
+              content: "You are a professional chef and nutritionist specializing in creating personalized meal plans. Your task is to suggest meals based on available ingredients and past meal preferences."
+            },
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 1000
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('OpenAI API Error Response:', errorData);
+        throw new Error(this.handleAPIError(response.status, errorData));
+      }
+
+      const data = await response.json();
+      return this.parseMealPlanResponse(data.choices[0].message.content);
+    } catch (error) {
+      console.error('Error generating AI meal plan:', error);
+      throw error;
+    }
+  }
+
+  buildMealPlanPrompt(refrigeratorItems, pastMeals, mealType, calorieTarget) {
+    return `Create a meal plan for ${mealType} based on the following information:
+
+Available Ingredients in Refrigerator:
+${refrigeratorItems.join(', ')}
+
+Past Meal Preferences (most recent first):
+${pastMeals.map(meal => `- ${meal.name}: ${meal.notes || 'No notes'}`).join('\n')}
+
+Target Calories: ${calorieTarget || 'Not specified'}
+
+Please suggest a meal that:
+1. Primarily uses ingredients available in the refrigerator
+2. Aligns with past meal preferences
+3. Meets the calorie target if specified
+4. Is appropriate for the meal type (${mealType})
+
+Return the response in this JSON format:
+{
+  "name": "Meal Name",
+  "time": "suggested time (HH:MM)",
+  "calories": estimated calories (number),
+  "notes": "detailed description of the meal with preparation instructions",
+  "ingredients": ["ingredient1", "ingredient2", ...],
+  "recipe": "step by step recipe instructions"
+}`;
+  }
+
+  parseMealPlanResponse(content) {
+    try {
+      // First try to parse as pure JSON
+      return JSON.parse(content);
+    } catch (error) {
+      // If that fails, try to extract JSON from the content
+      try {
+        // Extract JSON object from the content
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          // Try to parse the extracted JSON
+          try {
+            return JSON.parse(jsonMatch[0]);
+          } catch (jsonError) {
+            // Handle common JSON syntax errors like trailing commas
+            let cleanedJson = jsonMatch[0];
+            
+            // Remove trailing commas in objects and arrays
+            cleanedJson = cleanedJson.replace(/,\s*([\]}])/g, '$1');
+            
+            // Try parsing the cleaned JSON
+            return JSON.parse(cleanedJson);
+          }
+        }
+      } catch (innerError) {
+        console.error('Error parsing meal plan JSON:', innerError);
+      }
+
+      // If all parsing fails, return a structured error with fallback values
+      console.error('Failed to parse meal plan response:', content);
+      return {
+        name: "Suggested Meal",
+        time: "12:00",
+        calories: 500,
+        notes: "A balanced meal with protein and vegetables.",
+        ingredients: [],
+        recipe: "Unable to generate recipe details.",
+        error: true,
+        message: 'Failed to parse AI response'
+      };
+    }
+  }
+  
+  // Generate a meal plan based on specific ingredient suggestions
+  async generateMealWithIngredients(refrigeratorItems, suggestedIngredients, mealType, calorieTarget) {
+    if (!this.isConfigured()) {
+      // For demo purposes, return mock data if in development mode
+      if (import.meta.env.DEV || this.useMockData) {
+        console.warn('Using mock data because OpenAI API is not configured.');
+        return {
+          name: `${suggestedIngredients[0]} ${mealType}`,
+          time: '12:00',
+          calories: calorieTarget || 500,
+          notes: `AI suggested ${mealType.toLowerCase()} featuring ${suggestedIngredients.join(', ')}`,
+          ingredients: [...suggestedIngredients, ...refrigeratorItems.slice(0, 3)],
+          recipe: `Mock recipe for ${mealType} using ${suggestedIngredients.join(', ')}`
+        };
+      }
+      
+      throw this.getConfigurationError();
+    }
+
+    try {
+      const prompt = this.buildIngredientBasedMealPrompt(refrigeratorItems, suggestedIngredients, mealType, calorieTarget);
+      
+      const response = await fetch(this.apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              role: "system",
+              content: "You are a professional chef specializing in creating recipes based on specific ingredients. Your task is to create delicious meals that feature the user's suggested ingredients while incorporating other available ingredients."
+            },
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 1000
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('OpenAI API Error Response:', errorData);
+        throw new Error(this.handleAPIError(response.status, errorData));
+      }
+
+      const data = await response.json();
+      return this.parseMealPlanResponse(data.choices[0].message.content);
+    } catch (error) {
+      console.error('Error generating ingredient-based meal plan:', error);
+      throw error;
+    }
+  }
+
+  buildIngredientBasedMealPrompt(refrigeratorItems, suggestedIngredients, mealType, calorieTarget) {
+    return `Create a recipe for ${mealType} that features the following suggested ingredients:
+
+${suggestedIngredients.join(', ')}
+
+Other available ingredients in refrigerator:
+${refrigeratorItems.filter(item => !suggestedIngredients.includes(item)).join(', ')}
+
+Target Calories: ${calorieTarget || 'Not specified'}
+
+Please create a meal that:
+1. Features the suggested ingredients as the main components
+2. Incorporates other available ingredients as needed
+3. Meets the calorie target if specified
+4. Is appropriate for the meal type (${mealType})
+
+Return the response in this JSON format:
+{
+  "name": "Meal Name",
+  "time": "suggested time (HH:MM)",
+  "calories": "estimated calories (number)",
+  "notes": "detailed description of the meal highlighting the suggested ingredients",
+  "ingredients": ["ingredient1", "ingredient2"],
+  "recipe": "step by step recipe instructions"
+}`;
   }
 }
 

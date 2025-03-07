@@ -1,19 +1,25 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { GlobalErrorHandler } from './components/GlobalErrorHandler';
 
 // Components that are used on initial load
 import Navigation from './components/Navigation';
 import LoadingSpinner from './components/LoadingSpinner';
 import AdminRoute from './components/AdminRoute';
-import ApprovedUserRoute from './components/ApprovedUserRoute';
+import ProtectedLazyRoute from './components/ProtectedLazyRoute';
 import MetaTags from './components/MetaTags';
+import Footer from './components/Footer';
+import DevModeToggle from './components/DevModeToggle';
 
 // Lazy load all other components
 const LandingPage = lazy(() => import('./components/LandingPage'));
 const AdminLogin = lazy(() => import('./components/AdminLogin'));
 const Login = lazy(() => import('./components/Login'));
+const ForgotPassword = lazy(() => import('./components/ForgotPassword'));
 const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
+const SimpleAdminDashboard = lazy(() => import('./components/SimpleAdminDashboard'));
 const FoodGallery = lazy(() => import('./components/FoodGallery'));
 const ImageAnalysis = lazy(() => import('./components/ImageAnalysis'));
 const HealthMetrics = lazy(() => import('./components/HealthMetrics'));
@@ -26,11 +32,13 @@ const UserProfile = lazy(() => import('./components/UserProfile'));
 const AboutPage = lazy(() => import('./components/AboutPage'));
 const StayHealthyPage = lazy(() => import('./components/StayHealthyPage'));
 const ContactPage = lazy(() => import('./components/ContactPage'));
+const AccessDeniedPage = lazy(() => import('./components/AccessDeniedPage'));
 
 // CSS
 import './App.css';
 import './styles/browser-compatibility.css';
 import './styles/global.css';
+import './styles/createUserAccount.css';
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -42,6 +50,7 @@ const LoadingFallback = () => (
 
 function AppContent() {
   const { user, isAdmin, isApproved } = useAuth();
+  const userIsAdmin = isAdmin;
   const [orientation, setOrientation] = useState(window.innerWidth > window.innerHeight ? 'landscape' : 'portrait');
   const [isStandalone, setIsStandalone] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
@@ -86,7 +95,7 @@ function AppContent() {
     }
     
     // Add admin-user class when admin is logged in
-    if (isAdmin) {
+    if (userIsAdmin) {
       document.body.classList.add('admin-user');
     } else {
       document.body.classList.remove('admin-user');
@@ -130,7 +139,7 @@ function AppContent() {
       // Clean up admin class
       document.body.classList.remove('admin-user');
     };
-  }, [orientation, isAdmin]);
+  }, [orientation, userIsAdmin]);
 
   return (
     <>
@@ -140,6 +149,7 @@ function AppContent() {
       <div className={`flex flex-col min-h-screen w-full ${orientation === 'landscape' ? 'ipad-pro-landscape-fix' : 'ipad-pro-portrait-fix'}`}>
         <MetaTags />
         <Navigation />
+        <DevModeToggle />
         
         <main className="flex-grow w-full">
           <Suspense fallback={<LoadingFallback />}>
@@ -150,6 +160,8 @@ function AppContent() {
               <Route path="/stay-healthy" element={<StayHealthyPage />} />
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/access-denied" element={<AccessDeniedPage />} />
               
               {/* Admin Routes */}
               <Route path="/admin-login" element={<AdminLogin />} />
@@ -160,70 +172,32 @@ function AppContent() {
               } />
               
               {/* User Routes - Protected for Approved Users */}
-              <Route path="/gallery" element={
-                <ApprovedUserRoute>
-                  <FoodGallery />
-                </ApprovedUserRoute>
-              } />
+              <Route path="/gallery" element={<ProtectedLazyRoute component={FoodGallery} requiredPermission="basic_features" />} />
               
               {/* Track Menu Routes - Protected */}
-              <Route path="/analyze" element={
-                <ApprovedUserRoute>
-                  <ImageAnalysis />
-                </ApprovedUserRoute>
-              } />
-              <Route path="/health" element={
-                <ApprovedUserRoute>
-                  <HealthMetrics />
-                </ApprovedUserRoute>
-              } />
-              <Route path="/goals" element={
-                <ApprovedUserRoute>
-                  <Goals />
-                </ApprovedUserRoute>
-              } />
+              <Route path="/analyze" element={<ProtectedLazyRoute component={ImageAnalysis} requiredPermission="basic_features" />} />
+              <Route path="/health" element={<ProtectedLazyRoute component={HealthMetrics} requiredPermission="track_weight" />} />
+              <Route path="/goals" element={<ProtectedLazyRoute component={Goals} requiredPermission="basic_features" />} />
               
               {/* Kitchen Menu Routes - Protected */}
-              <Route path="/refrigerator/analyze" element={
-                <ApprovedUserRoute>
-                  <RefrigeratorAnalysis />
-                </ApprovedUserRoute>
-              } />
-              <Route path="/refrigerator" element={
-                <ApprovedUserRoute>
-                  <RefrigeratorGrid />
-                </ApprovedUserRoute>
-              } />
-              <Route path="/scan" element={
-                <ApprovedUserRoute>
-                  <RefrigeratorAnalysis />
-                </ApprovedUserRoute>
-              } />
+              <Route path="/refrigerator/analyze" element={<ProtectedLazyRoute component={RefrigeratorAnalysis} requiredPermission="basic_features" />} />
+              <Route path="/refrigerator" element={<ProtectedLazyRoute component={RefrigeratorGrid} requiredPermission="basic_features" />} />
+              <Route path="/scan" element={<ProtectedLazyRoute component={RefrigeratorAnalysis} requiredPermission="basic_features" />} />
               
               {/* Plan Menu Routes - Protected */}
-              <Route path="/meal-planner" element={
-                <ApprovedUserRoute>
-                  <MealPlanner />
-                </ApprovedUserRoute>
-              } />
-              <Route path="/recommendations" element={
-                <ApprovedUserRoute>
-                  <FoodRecommendations />
-                </ApprovedUserRoute>
-              } />
+              <Route path="/meal-planner" element={<ProtectedLazyRoute component={MealPlanner} requiredPermission="basic_features" />} />
+              <Route path="/recommendations" element={<ProtectedLazyRoute component={FoodRecommendations} requiredPermission="view_recommendations" />} />
               
               {/* Profile Route - Protected */}
-              <Route path="/profile" element={
-                <ApprovedUserRoute>
-                  <UserProfile />
-                </ApprovedUserRoute>
-              } />
+              <Route path="/profile" element={<ProtectedLazyRoute component={UserProfile} requiredPermission="basic_features" />} />
               
-              {/* Catch all route */}
+              {/* 404 Route - Catch All */}
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
           </Suspense>
         </main>
+        
+        <Footer />
       </div>
     </>
   );
@@ -231,11 +205,13 @@ function AppContent() {
 
 function App() {
   return (
-    <Router>
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
-    </Router>
+    <GlobalErrorHandler>
+      <Router>
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
+      </Router>
+    </GlobalErrorHandler>
   );
 }
 

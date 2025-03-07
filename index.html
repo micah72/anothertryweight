@@ -5,12 +5,41 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="HandheldFriendly" content="true" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="theme-color" content="#3d7fef" />
     <title>SnapLicious AI - Coming Soon</title>
     <link rel="apple-touch-startup-image" href="/splash/launch-2048x2732.png" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
     <link rel="apple-touch-startup-image" href="/splash/launch-1668x2224.png" media="(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
     <link rel="apple-touch-startup-image" href="/splash/launch-1536x2048.png" media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
     <link rel="apple-touch-startup-image" href="/splash/launch-1125x2436.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
     <link rel="apple-touch-startup-image" href="/splash/launch-1242x2208.png" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+    <style>
+      /* Fix for iOS status bar */
+      :root {
+        --sat: env(safe-area-inset-top);
+      }
+      
+      body {
+        padding: 0;
+        margin: 0;
+      }
+      
+      /* Status bar color fix */
+      @supports (padding-top: env(safe-area-inset-top)) {
+        body::before {
+          content: "";
+          width: 100%;
+          height: env(safe-area-inset-top);
+          position: fixed;
+          top: 0;
+          left: 0;
+          background-color: #3d7fef;
+          z-index: 10000;
+          display: block;
+        }
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
