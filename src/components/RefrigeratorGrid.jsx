@@ -9,6 +9,8 @@ const RefrigeratorGrid = () => {
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [expandedEntries, setExpandedEntries] = useState({});
+  const [expandedRecipes, setExpandedRecipes] = useState({});
   const { user, isAdmin, isApproved } = useAuth();
 
   const fetchEntries = async () => {
@@ -99,6 +101,20 @@ const RefrigeratorGrid = () => {
         });
       }
     }
+  };
+
+  const toggleExpandItems = (entryId) => {
+    setExpandedEntries(prev => ({
+      ...prev,
+      [entryId]: !prev[entryId]
+    }));
+  };
+
+  const toggleExpandRecipes = (entryId) => {
+    setExpandedRecipes(prev => ({
+      ...prev,
+      [entryId]: !prev[entryId]
+    }));
   };
 
   const formatDate = (timestamp) => {
@@ -260,18 +276,32 @@ const RefrigeratorGrid = () => {
                   <div className="space-y-2">
                     <h3 className="text-sm font-medium text-gray-700">Available Items:</h3>
                     <div className="flex flex-wrap gap-2">
-                      {analysisData.items.slice(0, 5).map((item, index) => (
-                        <span
+                      {(expandedEntries[entry.id] ? analysisData.items : analysisData.items.slice(0, 5)).map((item, index) => (
+                        <div
                           key={index}
-                          className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded"
+                          className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded inline-flex flex-col"
                         >
-                          {item}
-                        </span>
+                          <div className="font-medium">
+                            {typeof item === 'object' ? (item?.name || 'Unnamed item') : item}
+                          </div>
+                          {typeof item === 'object' && (
+                            <div className="flex flex-wrap gap-x-2 text-xs text-gray-500 mt-0.5">
+                              {item?.brand && <span>{item.brand}</span>}
+                              {item?.quantity && <span>{item.quantity}</span>}
+                            </div>
+                          )}
+                        </div>
                       ))}
                       {analysisData.items.length > 5 && (
-                        <span className="text-xs text-gray-500">
-                          +{analysisData.items.length - 5} more
-                        </span>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleExpandItems(entry.id);
+                          }}
+                          className="text-xs text-blue-600 hover:text-blue-800 font-medium underline cursor-pointer ml-1"
+                        >
+                          {expandedEntries[entry.id] ? 'Show less' : `+${analysisData.items.length - 5} more`}
+                        </button>
                       )}
                     </div>
                   </div>
@@ -284,7 +314,16 @@ const RefrigeratorGrid = () => {
                     <div className="mt-2 space-y-1">
                       {analysisData.expiringItems.map((item, index) => (
                         <div key={index} className="text-xs bg-yellow-50 text-yellow-700 px-2 py-1 rounded">
-                          {item}
+                          {typeof item === 'object' ? 
+                            <>
+                              <span className="font-medium">{item?.name || 'Unnamed item'}</span>
+                              {item?.daysUntilExpiry !== undefined && (
+                                <span className="ml-1 text-orange-600">
+                                  ({(item?.daysUntilExpiry <= 0) ? 'Expired!' : `${item?.daysUntilExpiry} days left`})
+                                </span>
+                              )}
+                            </> : 
+                            item}
                         </div>
                       ))}
                     </div>
@@ -296,18 +335,24 @@ const RefrigeratorGrid = () => {
                   <div className="mt-4">
                     <h3 className="text-sm font-medium text-gray-700">Suggested Recipes:</h3>
                     <div className="mt-2">
-                      {analysisData.suggestedRecipes.slice(0, 1).map((recipe, index) => (
-                        <div key={index} className="bg-green-50 p-2 rounded text-sm">
-                          <p className="font-medium text-green-800">{recipe.name}</p>
-                          {recipe.description && (
+                      {(expandedRecipes[entry.id] ? analysisData.suggestedRecipes : analysisData.suggestedRecipes.slice(0, 1)).map((recipe, index) => (
+                        <div key={index} className="bg-green-50 p-2 rounded text-sm mb-2">
+                          <p className="font-medium text-green-800">{typeof recipe === 'object' ? (recipe?.name || 'Unnamed recipe') : recipe}</p>
+                          {recipe?.description && (
                             <p className="text-xs text-green-600 mt-1">{recipe.description}</p>
                           )}
                         </div>
                       ))}
                       {analysisData.suggestedRecipes.length > 1 && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          +{analysisData.suggestedRecipes.length - 1} more recipes
-                        </p>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleExpandRecipes(entry.id);
+                          }}
+                          className="text-xs text-blue-600 hover:text-blue-800 font-medium underline cursor-pointer"
+                        >
+                          {expandedRecipes[entry.id] ? 'Show fewer recipes' : `+${analysisData.suggestedRecipes.length - 1} more recipes`}
+                        </button>
                       )}
                     </div>
                   </div>

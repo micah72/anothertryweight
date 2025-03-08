@@ -215,7 +215,7 @@ const LandingPage = () => {
   return (
     <div className="overflow-x-hidden w-full">
       {/* Hero Section */}
-      <section className={`bg-gradient-to-r from-blue-500 to-blue-700 w-full ${ipadTouchClass} ${iphoneTouchClass} safe-padding-top hero-section ${browserClass}`}>
+      <section className={`bg-gradient-to-r from-blue-500 to-blue-700 w-full ${ipadTouchClass} ${iphoneTouchClass} hero-section ${browserClass} mt-0`} style={{ marginTop: 0, paddingTop: 0 }}>
         <div className="container mx-auto px-4 safe-padding-left safe-padding-right">
           <div className={`flex flex-col md:flex-row items-center justify-between gap-8 ${safariFlexClass}`}>
             <div className="w-full md:max-w-xl lg:max-w-2xl mb-8 md:mb-0">

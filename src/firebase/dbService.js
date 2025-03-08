@@ -519,6 +519,49 @@ const dbService = {
       console.error('Error deleting meal plan:', error);
       throw error;
     }
+  },
+  // AI meal suggestions operations
+  saveAiMealSuggestions: async (userId, suggestions) => {
+    try {
+      if (!userId) {
+        throw new Error('No user ID provided');
+      }
+      
+      // Create a document reference with a specific ID based on the user
+      const suggestionsRef = doc(db, 'aiMealSuggestions', userId);
+      
+      // Set the document with the suggestions data
+      await setDoc(suggestionsRef, {
+        userId,
+        suggestions,
+        updated_at: serverTimestamp()
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('Error saving AI meal suggestions:', error);
+      throw error;
+    }
+  },
+  
+  getAiMealSuggestions: async (userId) => {
+    try {
+      if (!userId) {
+        throw new Error('No user ID provided');
+      }
+      
+      const suggestionsRef = doc(db, 'aiMealSuggestions', userId);
+      const docSnap = await getDoc(suggestionsRef);
+      
+      if (docSnap.exists()) {
+        return docSnap.data().suggestions;
+      } else {
+        return {};
+      }
+    } catch (error) {
+      console.error('Error getting AI meal suggestions:', error);
+      throw error;
+    }
   }
 };
 

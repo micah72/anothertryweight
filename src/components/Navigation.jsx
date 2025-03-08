@@ -321,7 +321,7 @@ const Navigation = () => {
                         {/* Dropdown content */}
                         {openDropdown === item.label && (
                           <div 
-                            className="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-blue-500 z-50"
+                            className="absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-blue-500 z-50"
                             style={{ 
                               display: 'block',
                               boxShadow: '0 10px 15px rgba(0, 0, 0, 0.2)',
@@ -333,13 +333,13 @@ const Navigation = () => {
                                 <Link
                                   key={child.label}
                                   to={child.path}
-                                  className="flex items-center px-4 py-2 text-sm text-white hover:bg-blue-600"
+                                  className="flex items-center px-4 py-2 text-sm text-white hover:bg-blue-600 whitespace-nowrap"
                                   onClick={handleMobileLinkClick}
                                 >
                                   <span className="mr-2">
                                     {React.cloneElement(child.icon, { style: svgStyle })}
                                   </span>
-                                  <span className="text-white font-medium">{child.label}</span>
+                                  <span className="text-white font-medium whitespace-nowrap">{child.label.length > 15 ? child.label : child.label}</span>
                                 </Link>
                               ))}
                             </div>
@@ -495,7 +495,7 @@ const Navigation = () => {
                         <span className="mr-3">
                           {React.cloneElement(child.icon, { style: svgStyle })}
                         </span>
-                        <span className="text-white font-medium">{child.label}</span>
+                        <span className="text-white font-medium whitespace-nowrap">{child.label.length > 15 ? child.label : child.label}</span>
                       </Link>
                     ))}
                   </div>

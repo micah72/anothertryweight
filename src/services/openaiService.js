@@ -62,31 +62,179 @@ class OpenAIService {
 
   // Placeholder method to provide mock data when API is not configured
   getMockAnalysisData() {
-    return {
+    // Create a more comprehensive mock analysis with all fields that will be expected by the UI
+    const mockData = {
       foodName: "Sample Food Item",
       calories: 350,
       healthScore: 7,
+      protein: 15,
+      carbs: 30,
+      fat: 12,
+      fiber: 5,
+      sugars: 8,
       benefits: "Rich in protein and vitamins",
-      concerns: "Moderate sodium content"
+      concerns: "Moderate sodium content",
+      portionSize: "Medium portion (150g)",
+      standardServingSize: "100g serving",
+      relativePortionSize: 1.5, // 1.5x standard serving
+      actualAmountDescription: "About 1.5x a standard serving size",
+      nutritionSource: "USDA FoodData Central",
+      healthScoreReason: "Good balance of macronutrients with moderate fiber content"
     };
+
+    // Prepare analysis data for storage - same format as in parseAnalysisResponse
+    mockData.analysisData = JSON.stringify({
+      protein: mockData.protein || 0,
+      carbs: mockData.carbs || 0,
+      fat: mockData.fat || 0,
+      fiber: mockData.fiber || 0,
+      sugars: mockData.sugars || 0,
+      benefits: mockData.benefits || 'No benefits information available',
+      concerns: mockData.concerns || 'No concerns information available',
+      nutritionSource: mockData.nutritionSource || 'Estimated by AI',
+      healthScoreReason: mockData.healthScoreReason || 'Based on overall nutritional value',
+      portionSize: mockData.portionSize || 'Medium portion',
+      standardServingSize: mockData.standardServingSize || 'Standard serving',
+      relativePortionSize: mockData.relativePortionSize || 1.0,
+      actualAmountDescription: mockData.actualAmountDescription || 'Standard serving size'
+    });
+    
+    console.log('Using mock analysis data:', mockData);
+    return mockData;
   }
   
   // Placeholder method to provide mock data when API is not configured
   getMockRefrigeratorData() {
     return {
-      items: ["Milk", "Eggs", "Cheese", "Tomatoes", "Lettuce", "Chicken", "Bread"],
-      expiringItems: ["Lettuce", "Tomatoes"],
-      suggestedRecipes: [
+      items: [
         {
-          name: "Quick Sandwich",
-          description: "A simple sandwich using bread, cheese, and vegetables",
-          ingredients: ["Bread", "Cheese", "Tomatoes", "Lettuce"]
+          name: "Milk",
+          brand: "Organic Valley",
+          category: "Dairy",
+          quantity: "1 gallon",
+          estimatedExpiry: "2025-03-15",
+          daysUntilExpiry: 8,
+          nutritionSummary: "High in calcium and vitamin D",
+          storageRecommendation: "Keep refrigerated below 40°F"
         },
         {
-          name: "Scrambled Eggs",
-          description: "Simple scrambled eggs with cheese",
-          ingredients: ["Eggs", "Cheese", "Milk"]
+          name: "Eggs",
+          brand: "Happy Hens",
+          category: "Protein",
+          quantity: "12 count, large",
+          estimatedExpiry: "2025-03-21",
+          daysUntilExpiry: 14,
+          nutritionSummary: "High in protein and B vitamins",
+          storageRecommendation: "Keep refrigerated, store in original carton"
+        },
+        {
+          name: "Cheddar Cheese",
+          brand: "Tillamook",
+          category: "Dairy",
+          quantity: "8oz block, about 75% remaining",
+          estimatedExpiry: "2025-04-10",
+          daysUntilExpiry: 34,
+          nutritionSummary: "Good source of calcium and protein",
+          storageRecommendation: "Keep wrapped and refrigerated"
+        },
+        {
+          name: "Tomatoes",
+          brand: "Organic",
+          category: "Vegetables",
+          quantity: "4 medium, slightly soft",
+          estimatedExpiry: "2025-03-10",
+          daysUntilExpiry: 3,
+          nutritionSummary: "High in vitamins A, C and lycopene",
+          storageRecommendation: "Use soon, store at room temperature for best flavor"
+        },
+        {
+          name: "Lettuce",
+          brand: "Fresh Farms",
+          category: "Vegetables",
+          quantity: "1 head, showing signs of wilting",
+          estimatedExpiry: "2025-03-09",
+          daysUntilExpiry: 2,
+          nutritionSummary: "Low in calories, good source of fiber",
+          storageRecommendation: "Use immediately, wash only before use"
+        },
+        {
+          name: "Chicken Breast",
+          brand: "Perdue",
+          category: "Protein",
+          quantity: "1 lb package, unopened",
+          estimatedExpiry: "2025-03-12",
+          daysUntilExpiry: 5,
+          nutritionSummary: "Lean protein source, low in fat",
+          storageRecommendation: "Keep refrigerated or freeze for longer storage"
+        },
+        {
+          name: "Whole Grain Bread",
+          brand: "Dave's Killer Bread",
+          category: "Grain",
+          quantity: "3/4 loaf remaining",
+          estimatedExpiry: "2025-03-14",
+          daysUntilExpiry: 7,
+          nutritionSummary: "Good source of fiber and whole grains",
+          storageRecommendation: "Keep sealed to maintain freshness"
         }
+      ],
+      inventorySummary: {
+        totalItems: 7,
+        expiringWithin3Days: 2,
+        expiringWithin7Days: 4,
+        categories: {
+          "Dairy": 2,
+          "Protein": 2,
+          "Vegetables": 2,
+          "Grain": 1
+        },
+        nutritionalBalance: "Good protein and vegetable options, could use more fruits and whole grains"
+      },
+      foodGroups: {
+        "Well Stocked": ["Dairy", "Protein"],
+        "Low Stock": ["Fruits", "Whole Grains"],
+        "Missing": ["Legumes"]
+      },
+      expiringItems: [
+        {
+          name: "Lettuce",
+          daysUntilExpiry: 2,
+          recommendation: "Use in salads or sandwiches within 2 days"
+        },
+        {
+          name: "Tomatoes",
+          daysUntilExpiry: 3,
+          recommendation: "Use in salads, sandwiches, or make a quick sauce"
+        }
+      ],
+      suggestedRecipes: [
+        {
+          name: "Chicken Club Sandwich",
+          description: "A hearty sandwich with grilled chicken, lettuce, tomato and cheese",
+          ingredients: ["Bread", "Chicken Breast", "Lettuce", "Tomatoes", "Cheddar Cheese"],
+          nutritionEstimate: "Approximately 450 calories, 35g protein, 30g carbs",
+          preparationTime: "15 minutes"
+        },
+        {
+          name: "Vegetable Omelette",
+          description: "Fluffy omelette with tomatoes, cheese and fresh herbs",
+          ingredients: ["Eggs", "Tomatoes", "Cheddar Cheese", "Milk"],
+          nutritionEstimate: "Approximately 350 calories, 25g protein, 5g carbs",
+          preparationTime: "10 minutes"
+        },
+        {
+          name: "Grilled Chicken Salad",
+          description: "Fresh salad with grilled chicken, tomatoes and lettuce",
+          ingredients: ["Chicken Breast", "Lettuce", "Tomatoes"],
+          nutritionEstimate: "Approximately 300 calories, 35g protein, 10g carbs",
+          preparationTime: "20 minutes"
+        }
+      ],
+      shoppingRecommendations: [
+        "Fresh fruits (berries, apples, bananas)",
+        "More vegetables for variety (bell peppers, carrots, cucumbers)",
+        "Whole grains (quinoa, brown rice)",
+        "Legumes (beans, lentils)"
       ]
     };
   }
@@ -232,7 +380,9 @@ class OpenAIService {
       // For demo purposes, we could return mock data if in development mode
       if (import.meta.env.DEV || this.useMockData) {
         console.warn('Using mock data because OpenAI API is not configured.');
-        return this.getMockAnalysisData();
+        const mockData = this.getMockAnalysisData();
+        console.log('Mock data for analysis:', mockData);
+        return mockData;
       }
       throw new Error('OpenAI API is not properly configured. ' + this.getConfigurationError());
     }
@@ -242,37 +392,48 @@ class OpenAIService {
     }
 
     try {
-      const response = await fetch(this.apiUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [
-            {
-              role: "user",
-              content: [
-                {
-                  type: "text",
-                  text: "Analyze this food image and provide the following in a JSON format without any additional text or markdown: {\"foodName\": \"name of food\", \"calories\": number, \"healthScore\": number from 1-10, \"benefits\": \"main nutritional benefits\", \"concerns\": \"potential health concerns\"}"
-                },
-                {
-                  type: "image_url",
-                  image_url: {
-                    url: base64Image.startsWith('data:') 
-                      ? base64Image 
-                      : `data:image/jpeg;base64,${base64Image}`
-                  }
+      console.log('Sending image to OpenAI API for analysis...');
+      
+      // Prepare the request payload
+      const requestBody = {
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "You are a nutritional analysis expert. Analyze food images and provide detailed nutritional information based on reliable nutritional databases like USDA FoodData Central. Be thorough, accurate, and provide sources for your nutritional data. You must accurately estimate the relative portion size in the image compared to standard serving sizes."
+          },
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: "Analyze this food image and provide detailed nutritional information in a JSON format. VERY IMPORTANT: First analyze the relative portion size visible in the image compared to a standard serving, then calculate nutritional values proportionate to that actual amount.\n\nInclude the following data:\n\n{\"foodName\": \"name of food\", \"calories\": number proportional to visible amount, \"protein\": number in grams proportional to visible amount, \"carbs\": number in grams proportional to visible amount, \"fat\": number in grams proportional to visible amount, \"fiber\": number in grams proportional to visible amount, \"sugars\": number in grams proportional to visible amount, \"healthScore\": number from 1-10, \"benefits\": \"main nutritional benefits\", \"concerns\": \"potential health concerns\", \"portionSize\": \"description of the amount in the image\", \"standardServingSize\": \"what a standard serving size would be\", \"relativePortionSize\": number ratio compared to standard serving, \"actualAmountDescription\": \"description comparing to standard serving size\", \"nutritionSource\": \"source of the nutritional data\", \"healthScoreReason\": \"explanation for the health score\"}\n\nProvide ONLY the JSON without any additional text or markdown. Use high-quality sources such as USDA FoodData Central or other reputable nutritional databases."
+              },
+              {
+                type: "image_url",
+                image_url: {
+                  url: base64Image.startsWith('data:') 
+                    ? base64Image 
+                    : `data:image/jpeg;base64,${base64Image}`
                 }
-              ]
-            }
-          ],
+              }
+            ]
+          }
+        ],
           max_tokens: 1000,
           temperature: 0.5
-        })
-      });
+        };
+      
+        console.log('Request payload:', JSON.stringify(requestBody));
+        
+        const response = await fetch(this.apiUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(requestBody)
+        });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -281,7 +442,13 @@ class OpenAIService {
       }
 
       const data = await response.json();
-      const result = this.parseAnalysisResponse(data.choices[0].message.content);
+      console.log('OpenAI API Response:', data);
+      
+      const content = data.choices[0].message.content;
+      console.log('Content from response:', content);
+      
+      const result = this.parseAnalysisResponse(content);
+      console.log('Parsed result:', result);
       
       if (result.error) {
         throw new Error('Failed to analyze image content');
@@ -290,6 +457,11 @@ class OpenAIService {
       return result;
     } catch (error) {
       console.error('Error in analyzeImage:', error);
+      // Fall back to mock data in development mode
+      if (import.meta.env.DEV || this.useMockData) {
+        console.warn('Falling back to mock data due to error');
+        return this.getMockAnalysisData();
+      }
       throw error;
     }
   }
@@ -319,11 +491,15 @@ class OpenAIService {
           model: "gpt-4o-mini",
           messages: [
             {
+              role: "system",
+              content: "You are an expert in food inventory analysis and nutritional assessment. Your task is to meticulously analyze refrigerator contents, identify brands, packaging, portion sizes, and estimate nutritional information. Provide detailed insights about food items, expiration dates, and generate recipe suggestions based on available ingredients."
+            },
+            {
               role: "user",
               content: [
                 {
                   type: "text",
-                  text: "Analyze this refrigerator image and provide the following in a JSON format without any additional text or markdown: {\"items\": [\"list of visible food items\"], \"expiringItems\": [\"items that appear to be aging or need to be used soon based on visual cues\"], \"suggestedRecipes\": [{\"name\": \"recipe name\", \"description\": \"brief description using available ingredients\", \"ingredients\": [\"required ingredients from visible items\"]}]}"
+                  text: "Analyze this refrigerator image in extreme detail and provide the following in a JSON format without any additional text or markdown:\n\n{\n  \"items\": [\n    {\n      \"name\": \"full name of the food item\",\n      \"brand\": \"identified brand name if visible\",\n      \"category\": \"food category (Dairy, Protein, Vegetables, etc.)\",\n      \"quantity\": \"estimated quantity and portion size\",\n      \"estimatedExpiry\": \"YYYY-MM-DD estimated expiration date\",\n      \"daysUntilExpiry\": number of days until expiry,\n      \"nutritionSummary\": \"brief nutrition highlights\",\n      \"storageRecommendation\": \"proper storage advice\"\n    }\n  ],\n  \"inventorySummary\": {\n    \"totalItems\": total number of items,\n    \"expiringWithin3Days\": number of soon-expiring items,\n    \"expiringWithin7Days\": number of items expiring within a week,\n    \"categories\": {\"category name\": count},\n    \"nutritionalBalance\": \"assessment of nutritional balance\"\n  },\n  \"foodGroups\": {\n    \"Well Stocked\": [\"list of well-represented food groups\"],\n    \"Low Stock\": [\"list of under-represented food groups\"],\n    \"Missing\": [\"list of missing essential food groups\"]\n  },\n  \"expiringItems\": [\n    {\n      \"name\": \"item name\",\n      \"daysUntilExpiry\": days left,\n      \"recommendation\": \"usage recommendation\"\n    }\n  ],\n  \"suggestedRecipes\": [\n    {\n      \"name\": \"recipe name\",\n      \"description\": \"detailed description with cooking method\",\n      \"ingredients\": [\"list of required ingredients from visible items\"],\n      \"nutritionEstimate\": \"estimated nutritional information\",\n      \"preparationTime\": \"estimated prep and cook time\"\n    }\n  ],\n  \"shoppingRecommendations\": [\"list of items to buy based on what's missing\"]\n}\n\nBe extremely thorough in identifying ALL items in the refrigerator, including condiments, beverages, and items in drawers or on door shelves. Look for expiration dates on packaging, brand labels, and assess the condition of produce. Identify any organic or specialty products."
                 },
                 {
                   type: "image_url",
@@ -336,8 +512,8 @@ class OpenAIService {
               ]
             }
           ],
-          max_tokens: 1500,
-          temperature: 0.5
+          max_tokens: 2000,
+          temperature: 0.3
         })
       });
 
@@ -447,29 +623,86 @@ Please provide recommendations in the following JSON format:
 
   parseAnalysisResponse(content) {
     try {
+      console.log('Parsing OpenAI response:', content);
+      
+      // Clean the content by removing any markdown code blocks and trimming whitespace
       let cleanContent = content.replace(/```json\s*|\s*```/g, '').trim();
+      console.log('Cleaned content:', cleanContent);
+      
+      // Extract JSON from the content
       const jsonMatch = cleanContent.match(/{[\s\S]*}/);
       if (!jsonMatch) {
+        console.error('No valid JSON found in response');
         throw new Error('Invalid response format');
       }
 
+      console.log('JSON match found:', jsonMatch[0]);
+      
+      // Parse the JSON data
       const parsedData = JSON.parse(jsonMatch[0]);
+      console.log('Successfully parsed JSON data:', parsedData);
 
-      return {
+      // Prepare analysis data for storage
+      const analysisData = JSON.stringify({
+        protein: parsedData.protein || 0,
+        carbs: parsedData.carbs || 0,
+        fat: parsedData.fat || 0,
+        fiber: parsedData.fiber || 0,
+        sugars: parsedData.sugars || 0,
+        benefits: parsedData.benefits || 'No benefits information available',
+        concerns: parsedData.concerns || 'No concerns information available',
+        nutritionSource: parsedData.nutritionSource || 'Estimated by AI',
+        healthScoreReason: parsedData.healthScoreReason || 'Based on overall nutritional value',
+        portionSize: parsedData.portionSize || 'Standard serving',
+        standardServingSize: parsedData.standardServingSize || 'Standard serving',
+        relativePortionSize: parsedData.relativePortionSize || 1.0,
+        actualAmountDescription: parsedData.actualAmountDescription || 'Standard serving size'
+      });
+
+      // Create the final result object with all required fields
+      const result = {
         foodName: String(parsedData.foodName || 'Unknown Food'),
         calories: Number(parsedData.calories) || 0,
         healthScore: Number(parsedData.healthScore) || 0,
+        protein: Number(parsedData.protein) || 0,
+        carbs: Number(parsedData.carbs) || 0,
+        fat: Number(parsedData.fat) || 0,
+        fiber: Number(parsedData.fiber) || 0,
+        sugars: Number(parsedData.sugars) || 0,
         benefits: String(parsedData.benefits || 'No benefits information available'),
-        concerns: String(parsedData.concerns || 'No concerns information available')
+        concerns: String(parsedData.concerns || 'No concerns information available'),
+        portionSize: String(parsedData.portionSize || 'Standard serving'),
+        standardServingSize: String(parsedData.standardServingSize || 'Standard serving'),
+        relativePortionSize: Number(parsedData.relativePortionSize) || 1.0,
+        actualAmountDescription: String(parsedData.actualAmountDescription || 'Standard serving size'),
+        nutritionSource: String(parsedData.nutritionSource || 'Estimated by AI'),
+        healthScoreReason: String(parsedData.healthScoreReason || 'Based on overall nutritional value'),
+        analysisData: analysisData
       };
+      
+      console.log('Final parsed result object:', result);
+      return result;
     } catch (error) {
       console.error('Error parsing OpenAI response:', error);
+      // Return a structured error object with all required fields
       return {
+        error: true,
         foodName: 'Analysis Failed',
         calories: 0,
         healthScore: 0,
+        protein: 0,
+        standardServingSize: 'Standard serving',
+        relativePortionSize: 1.0,
+        actualAmountDescription: 'Standard serving size',
+        carbs: 0,
+        fat: 0,
+        fiber: 0,
+        sugars: 0,
         benefits: 'Unable to analyze nutritional benefits',
         concerns: 'Unable to analyze health concerns',
+        portionSize: 'Standard serving',
+        nutritionSource: 'Analysis Failed',
+        healthScoreReason: 'Analysis Failed',
         error: true
       };
     }
@@ -487,21 +720,49 @@ Please provide recommendations in the following JSON format:
 
       return {
         items: Array.isArray(parsedData.items) ? parsedData.items : [],
+        inventorySummary: parsedData.inventorySummary || {
+          totalItems: 0,
+          expiringWithin3Days: 0,
+          expiringWithin7Days: 0,
+          categories: {},
+          nutritionalBalance: 'No data available'
+        },
+        foodGroups: parsedData.foodGroups || {
+          "Well Stocked": [],
+          "Low Stock": [],
+          "Missing": []
+        },
         expiringItems: Array.isArray(parsedData.expiringItems) ? parsedData.expiringItems : [],
         suggestedRecipes: Array.isArray(parsedData.suggestedRecipes) 
           ? parsedData.suggestedRecipes.map(recipe => ({
               name: String(recipe.name || 'Unnamed Recipe'),
               description: String(recipe.description || 'No description available'),
-              ingredients: Array.isArray(recipe.ingredients) ? recipe.ingredients : []
+              ingredients: Array.isArray(recipe.ingredients) ? recipe.ingredients : [],
+              nutritionEstimate: String(recipe.nutritionEstimate || 'Nutritional information not available'),
+              preparationTime: String(recipe.preparationTime || 'Preparation time unknown')
             }))
-          : []
+          : [],
+        shoppingRecommendations: Array.isArray(parsedData.shoppingRecommendations) ? parsedData.shoppingRecommendations : []
       };
     } catch (error) {
       console.error('Error parsing refrigerator analysis response:', error);
       return {
         items: [],
+        inventorySummary: {
+          totalItems: 0,
+          expiringWithin3Days: 0,
+          expiringWithin7Days: 0,
+          categories: {},
+          nutritionalBalance: 'Data unavailable'
+        },
+        foodGroups: {
+          "Well Stocked": [],
+          "Low Stock": [],
+          "Missing": []
+        },
         expiringItems: [],
         suggestedRecipes: [],
+        shoppingRecommendations: [],
         error: true
       };
     }

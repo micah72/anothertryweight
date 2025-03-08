@@ -160,13 +160,38 @@ const RefrigeratorAnalysis = () => {
         throw new Error('Failed to analyze refrigerator content');
       }
 
+      // Process items to ensure they have the correct structure
+      const processedItems = Array.isArray(result.items) 
+        ? result.items.map(item => {
+            // Handle case where item might be a string instead of an object
+            if (typeof item === 'string') {
+              return { name: item, category: 'Uncategorized' };
+            }
+            return item || { name: 'Unknown Item', category: 'Uncategorized' };
+          })
+        : [];
+
+      // Process expiring items
+      const processedExpiringItems = Array.isArray(result.expiringItems)
+        ? result.expiringItems.map(item => {
+            // Handle case where item might be a string instead of an object
+            if (typeof item === 'string') {
+              return { name: item };
+            }
+            return item || { name: 'Unknown Item' };
+          })
+        : [];
+
       // Create a properly structured entry object
       const entry = {
         type: 'refrigerator',
         imagePath: prepareImageForStorage(selectedImage),
-        items: result.items || [],
-        expiringItems: result.expiringItems || [],
+        items: processedItems,
+        expiringItems: processedExpiringItems,
         suggestedRecipes: result.suggestedRecipes || [],
+        inventorySummary: result.inventorySummary || {},
+        foodGroups: result.foodGroups || {},
+        shoppingRecommendations: result.shoppingRecommendations || [],
         analysisData: JSON.stringify(result),
         created_at: new Date(),
         // Add required fields that were missing before
@@ -304,46 +329,33 @@ const RefrigeratorAnalysis = () => {
           <div className="card-base p-6">
             <h3 className="text-xl font-semibold mb-4">Refrigerator Analysis</h3>
             
-            {analysis.items.length > 0 && (
+            {analysis?.items?.length > 0 && (
               <div className="mb-4">
                 <h4 className="font-medium text-gray-700 mb-2">Items Detected</h4>
-                <div className="flex flex-wrap gap-2">
-                  {analysis.items.map((item, index) => (
-                    <span key={index} className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm">
-                      {item}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {analysis.expiringItems.length > 0 && (
-              <div className="mb-4">
-                <h4 className="font-medium text-gray-700 mb-2">Items to Use Soon</h4>
-                <div className="flex flex-wrap gap-2">
-                  {analysis.expiringItems.map((item, index) => (
-                    <span key={index} className="bg-yellow-50 text-yellow-700 px-3 py-1 rounded-full text-sm">
-                      {item}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {analysis.suggestedRecipes.length > 0 && (
-              <div className="mb-6">
-                <h4 className="font-medium text-gray-700 mb-2">Suggested Recipes</h4>
-                <div className="space-y-3">
-                  {analysis.suggestedRecipes.map((recipe, index) => (
-                    <div key={index} className="bg-gray-50 p-3 rounded-lg">
-                      <h5 className="font-medium text-gray-800">{recipe.name}</h5>
-                      <p className="text-sm text-gray-600 mb-2">{recipe.description}</p>
-                      <div className="flex flex-wrap gap-1">
-                        {recipe.ingredients.map((ingredient, idx) => (
-                          <span key={idx} className="bg-green-50 text-green-700 px-2 py-0.5 rounded text-xs">
-                            {ingredient}
-                          </span>
-                        ))}
+                <div className="grid gap-3">
+                  {analysis.items.map((item, index) => item && (
+                    <div key={index} className="bg-blue-50 p-3 rounded-lg">
+                      <div className="flex justify-between items-start">
+                        <h5 className="font-medium text-gray-800">{item?.name || 'Unnamed Item'}</h5>
+                        {item?.brand && <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs">{item.brand}</span>}
+                      </div>
+                      <div className="text-sm grid grid-cols-2 gap-x-4 gap-y-1 mt-2">
+                        <div><span className="text-gray-600">Category:</span> {item?.category || 'Uncategorized'}</div>
+                        <div><span className="text-gray-600">Quantity:</span> {item?.quantity || 'Unknown'}</div>
+                        {item?.estimatedExpiry && (
+                          <div><span className="text-gray-600">Expires:</span> {new Date(item?.estimatedExpiry).toLocaleDateString()}</div>
+                        )}
+                        {item?.daysUntilExpiry !== undefined && (
+                          <div className={`${(item?.daysUntilExpiry || 0) < 3 ? 'text-red-600 font-medium' : 'text-gray-600'}`}>
+                            {(item?.daysUntilExpiry || 0) < 0 ? 'Expired' : `${item?.daysUntilExpiry || 0} days remaining`}
+                          </div>
+                        )}
+                        {item?.nutritionSummary && (
+                          <div className="col-span-2 mt-1"><span className="text-gray-600">Nutrition:</span> {item?.nutritionSummary}</div>
+                        )}
+                        {item?.storageRecommendation && (
+                          <div className="col-span-2 mt-1"><span className="text-gray-600">Storage:</span> {item?.storageRecommendation}</div>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -351,6 +363,132 @@ const RefrigeratorAnalysis = () => {
               </div>
             )}
             
+            {analysis?.expiringItems?.length > 0 && (
+              <div className="mb-4">
+                <h4 className="font-medium text-gray-700 mb-2">Items to Use Soon</h4>
+                <div className="grid gap-2">
+                  {analysis.expiringItems.map((item, index) => item && (
+                    <div key={index} className="bg-yellow-50 p-3 rounded-lg flex justify-between items-center">
+                      <div>
+                        <span className="font-medium">{item?.name || 'Unnamed Item'}</span>
+                        {item?.daysUntilExpiry !== undefined && (
+                          <span className="ml-2 text-sm text-orange-600">
+                            {(item?.daysUntilExpiry || 0) <= 0 ? 'Expired!' : `${item?.daysUntilExpiry || 0} days left`}
+                          </span>
+                        )}
+                      </div>
+                      {item?.recommendation && (
+                        <div className="text-sm text-gray-700">{item?.recommendation}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {analysis?.suggestedRecipes?.length > 0 && (
+              <div className="mb-6">
+                <h4 className="font-medium text-gray-700 mb-2">Suggested Recipes</h4>
+                <div className="space-y-3">
+                  {analysis.suggestedRecipes.map((recipe, index) => recipe && (
+                    <div key={index} className="bg-gray-50 p-3 rounded-lg">
+                      <h5 className="font-medium text-gray-800">{recipe?.name || 'Unnamed Recipe'}</h5>
+                      <p className="text-sm text-gray-600 mb-2">{recipe?.description || 'No description available'}</p>
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        {recipe?.ingredients?.map((ingredient, idx) => ingredient && (
+                          <span key={idx} className="bg-green-50 text-green-700 px-2 py-0.5 rounded text-xs">
+                            {ingredient}
+                          </span>
+                        ))}
+                      </div>
+                      <div className="text-xs grid grid-cols-2 gap-2 text-gray-600 mt-2 pt-2 border-t border-gray-100">
+                        {recipe.nutritionEstimate && (
+                          <div><span className="font-medium">Nutrition:</span> {recipe.nutritionEstimate}</div>
+                        )}
+                        {recipe.preparationTime && (
+                          <div><span className="font-medium">Prep Time:</span> {recipe.preparationTime}</div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Inventory Summary */}
+            {analysis?.inventorySummary && (
+              <div className="mb-6">
+                <h4 className="font-medium text-gray-700 mb-2">Inventory Summary</h4>
+                <div className="bg-indigo-50 p-3 rounded-lg">
+                  <div className="grid grid-cols-3 gap-2 mb-2">
+                    <div className="text-center p-2 bg-white rounded shadow-sm">
+                      <div className="text-gray-600 text-xs">Total Items</div>
+                      <div className="font-bold text-indigo-600">{analysis?.inventorySummary?.totalItems || 0}</div>
+                    </div>
+                    <div className="text-center p-2 bg-white rounded shadow-sm">
+                      <div className="text-gray-600 text-xs">Expiring 3 Days</div>
+                      <div className="font-bold text-orange-500">{analysis?.inventorySummary?.expiringWithin3Days || 0}</div>
+                    </div>
+                    <div className="text-center p-2 bg-white rounded shadow-sm">
+                      <div className="text-gray-600 text-xs">Expiring 7 Days</div>
+                      <div className="font-bold text-yellow-500">{analysis?.inventorySummary?.expiringWithin7Days || 0}</div>
+                    </div>
+                  </div>
+                  <div className="text-sm">
+                    <div className="font-medium">Nutritional Balance:</div>
+                    <div className="text-gray-700">{analysis?.inventorySummary?.nutritionalBalance || 'No data available'}</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Food Groups */}
+            {analysis?.foodGroups && (
+              <div className="mb-6">
+                <h4 className="font-medium text-gray-700 mb-2">Food Groups</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="bg-green-50 p-3 rounded-lg">
+                    <h5 className="font-medium text-green-800 text-sm mb-1">Well Stocked</h5>
+                    <div className="flex flex-wrap gap-1">
+                      {analysis.foodGroups["Well Stocked"]?.length > 0 ? analysis.foodGroups["Well Stocked"].map((group, idx) => (
+                        <span key={idx} className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs">{group}</span>
+                      )) : <span className="text-xs text-gray-500">None</span>}
+                    </div>
+                  </div>
+                  <div className="bg-yellow-50 p-3 rounded-lg">
+                    <h5 className="font-medium text-yellow-800 text-sm mb-1">Low Stock</h5>
+                    <div className="flex flex-wrap gap-1">
+                      {analysis.foodGroups["Low Stock"]?.length > 0 ? analysis.foodGroups["Low Stock"].map((group, idx) => (
+                        <span key={idx} className="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded text-xs">{group}</span>
+                      )) : <span className="text-xs text-gray-500">None</span>}
+                    </div>
+                  </div>
+                  <div className="bg-red-50 p-3 rounded-lg">
+                    <h5 className="font-medium text-red-800 text-sm mb-1">Missing</h5>
+                    <div className="flex flex-wrap gap-1">
+                      {analysis.foodGroups["Missing"]?.length > 0 ? analysis.foodGroups["Missing"].map((group, idx) => (
+                        <span key={idx} className="bg-red-100 text-red-700 px-2 py-0.5 rounded text-xs">{group}</span>
+                      )) : <span className="text-xs text-gray-500">None</span>}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Shopping Recommendations */}
+            {analysis?.shoppingRecommendations && analysis.shoppingRecommendations.length > 0 && (
+              <div className="mb-6">
+                <h4 className="font-medium text-gray-700 mb-2">Shopping Recommendations</h4>
+                <div className="bg-blue-50 p-3 rounded-lg">
+                  <div className="flex flex-wrap gap-1">
+                    {analysis.shoppingRecommendations.map((item, idx) => item && (
+                      <span key={idx} className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs">{item}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="flex justify-between">
               <button
                 onClick={resetAnalysis}

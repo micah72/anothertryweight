@@ -78,7 +78,10 @@ const FoodGallery = () => {
         return {
           protein: analysis.protein || 'N/A',
           carbs: analysis.carbs || 'N/A',
-          fat: analysis.fat || 'N/A'
+          fat: analysis.fat || 'N/A',
+          nutritionSource: analysis.nutritionSource || 'Estimated by AI',
+          healthScoreReason: analysis.healthScoreReason || 'Based on overall nutritional value',
+          portionSize: analysis.portionSize || 'Standard serving'
         };
       }
     } catch (e) {
@@ -88,7 +91,10 @@ const FoodGallery = () => {
     return {
       protein: 'N/A',
       carbs: 'N/A',
-      fat: 'N/A'
+      fat: 'N/A',
+      nutritionSource: 'Estimated by AI',
+      healthScoreReason: 'Based on overall nutritional value',
+      portionSize: 'Standard serving'
     };
   };
 
@@ -109,7 +115,10 @@ const FoodGallery = () => {
               carbs: analysis.carbs || '',
               fat: analysis.fat || '',
               benefits: analysis.benefits || '',
-              concerns: analysis.concerns || ''
+              concerns: analysis.concerns || '',
+              nutritionSource: analysis.nutritionSource || 'Estimated by AI',
+              healthScoreReason: analysis.healthScoreReason || 'Based on overall nutritional value',
+              portionSize: analysis.portionSize || 'Standard serving'
             };
           }
           return {};
@@ -145,7 +154,10 @@ const FoodGallery = () => {
         carbs: editFormData.carbs || '',
         fat: editFormData.fat || '',
         benefits: editFormData.benefits || '',
-        concerns: editFormData.concerns || ''
+        concerns: editFormData.concerns || '',
+        nutritionSource: editFormData.nutritionSource || 'Estimated by AI',
+        healthScoreReason: editFormData.healthScoreReason || 'Based on overall nutritional value',
+        portionSize: editFormData.portionSize || 'Standard serving'
       });
       
       // Update food entry
@@ -355,10 +367,24 @@ const FoodGallery = () => {
                 </div>
               </div>
               
+              <div className="mb-4 text-sm">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-gray-700 font-medium">Portion Size:</span>
+                  <span className="text-gray-600">{extractNutrients(selectedFood).portionSize}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-700 font-medium">Nutrition Data Source:</span>
+                  <span className="text-gray-600">{extractNutrients(selectedFood).nutritionSource}</span>
+                </div>
+              </div>
+              
               <div className="border-t border-gray-200 pt-4">
                 <h3 className="font-semibold text-gray-900 mb-2">Analysis</h3>
                 <div className="bg-gray-50 p-3 rounded-md">
                   <h4 className="font-semibold text-gray-800">Health Score: {selectedFood.healthScore}/10</h4>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {extractNutrients(selectedFood).healthScoreReason}
+                  </p>
                   {selectedFood.analysisData && (
                     <>
                       <div className="mt-2">
@@ -548,7 +574,53 @@ const FoodGallery = () => {
                       />
                     </div>
                   </div>
+
+                  <div className="grid grid-cols-2 gap-3 mt-3">
+                    <div>
+                      <label htmlFor="portionSize" className="block text-sm font-medium text-gray-700 mb-1">
+                        Portion Size
+                      </label>
+                      <input
+                        type="text"
+                        id="portionSize"
+                        name="portionSize"
+                        value={editFormData.portionSize || ''}
+                        onChange={handleInputChange}
+                        placeholder="e.g., 100g, 1 cup"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="nutritionSource" className="block text-sm font-medium text-gray-700 mb-1">
+                        Data Source
+                      </label>
+                      <input
+                        type="text"
+                        id="nutritionSource"
+                        name="nutritionSource"
+                        value={editFormData.nutritionSource || ''}
+                        onChange={handleInputChange}
+                        placeholder="e.g., USDA, Package Label"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      />
+                    </div>
+                  </div>
                   
+                  <div>
+                    <label htmlFor="healthScoreReason" className="block text-sm font-medium text-gray-700 mb-1">
+                      Health Score Explanation
+                    </label>
+                    <textarea
+                      id="healthScoreReason"
+                      name="healthScoreReason"
+                      value={editFormData.healthScoreReason || ''}
+                      onChange={handleInputChange}
+                      rows="2"
+                      placeholder="Brief explanation of the health score"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    ></textarea>
+                  </div>
+
                   <div>
                     <label htmlFor="benefits" className="block text-sm font-medium text-gray-700 mb-1">
                       Health Benefits

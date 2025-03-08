@@ -136,20 +136,55 @@ const ImageAnalysis = () => {
         ? selectedImage 
         : `data:image/jpeg;base64,${selectedImage}`;
       
+      // Call OpenAI API to analyze the image
       const result = await openaiService.analyzeImage(imageToSend);
+      
+      // Logging the result for debugging
+      console.log('OpenAI Analysis Result:', result);
 
       if (result.error) {
         throw new Error('Failed to analyze image content');
       }
+      
+      // Ensure we have all required nutritional values
+      const processedResult = {
+        foodName: result.foodName || 'Unknown Food',
+        calories: result.calories || 0,
+        healthScore: result.healthScore || 0,
+        protein: result.protein || 0,
+        carbs: result.carbs || 0,
+        fat: result.fat || 0,
+        fiber: result.fiber || 0,
+        sugars: result.sugars || 0,
+        benefits: result.benefits || 'No benefits information available',
+        concerns: result.concerns || 'No concerns information available',
+        portionSize: result.portionSize || 'Standard serving',
+        nutritionSource: result.nutritionSource || 'Estimated by AI',
+        healthScoreReason: result.healthScoreReason || 'Based on overall nutritional value',
+        analysisData: result.analysisData || JSON.stringify({
+          protein: result.protein || 0,
+          carbs: result.carbs || 0,
+          fat: result.fat || 0,
+          fiber: result.fiber || 0,
+          sugars: result.sugars || 0,
+          benefits: result.benefits || 'No benefits information available',
+          concerns: result.concerns || 'No concerns information available',
+          nutritionSource: result.nutritionSource || 'Estimated by AI',
+          healthScoreReason: result.healthScoreReason || 'Based on overall nutritional value',
+          portionSize: result.portionSize || 'Standard serving'
+        })
+      };
+
+      console.log('Processed Result for Display:', processedResult);
 
       // Save the analysis to Firebase
       try {
         await dbService.addFoodEntry(user.uid, {
           imagePath: selectedImage,
-          foodName: result.foodName,
-          calories: result.calories || 0,
-          healthScore: result.healthScore || 0,
-          analysisData: JSON.stringify(result),
+          foodName: processedResult.foodName,
+          calories: processedResult.calories,
+          healthScore: processedResult.healthScore,
+          analysisData: processedResult.analysisData,
           type: 'food',
           created_at: new Date()
         });
@@ -158,7 +193,7 @@ const ImageAnalysis = () => {
         // Continue with the analysis even if saving fails
       }
 
-      setAnalysis(result);
+      setAnalysis(processedResult);
     } catch (error) {
       console.error('Analysis error:', error);
       
@@ -286,14 +321,71 @@ const ImageAnalysis = () => {
               </div>
             </div>
             
+            <div className="grid grid-cols-3 gap-4 mb-4">
+              <div className="bg-red-50 p-3 rounded-lg">
+                <p className="text-sm text-gray-500">Protein</p>
+                <p className="text-xl font-bold text-red-600">{analysis.protein || 0}g</p>
+              </div>
+              <div className="bg-yellow-50 p-3 rounded-lg">
+                <p className="text-sm text-gray-500">Carbs</p>
+                <p className="text-xl font-bold text-yellow-600">{analysis.carbs || 0}g</p>
+              </div>
+              <div className="bg-purple-50 p-3 rounded-lg">
+                <p className="text-sm text-gray-500">Fat</p>
+                <p className="text-xl font-bold text-purple-600">{analysis.fat || 0}g</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="bg-teal-50 p-3 rounded-lg">
+                <p className="text-sm text-gray-500">Fiber</p>
+                <p className="text-xl font-bold text-teal-600">{analysis.fiber || 0}g</p>
+              </div>
+              <div className="bg-orange-50 p-3 rounded-lg">
+                <p className="text-sm text-gray-500">Sugars</p>
+                <p className="text-xl font-bold text-orange-600">{analysis.sugars || 0}g</p>
+              </div>
+            </div>
+            
+            <div className="mb-4">
+              <h4 className="font-medium text-gray-700 mb-1">Health Score Explanation</h4>
+              <p className="text-gray-600">{analysis.healthScoreReason}</p>
+            </div>
+
             <div className="mb-4">
               <h4 className="font-medium text-gray-700 mb-1">Benefits</h4>
               <p className="text-gray-600">{analysis.benefits}</p>
             </div>
             
-            <div className="mb-6">
+            <div className="mb-4">
               <h4 className="font-medium text-gray-700 mb-1">Concerns</h4>
               <p className="text-gray-600">{analysis.concerns}</p>
+            </div>
+
+            <div className="bg-amber-50 p-4 rounded-lg mb-4">
+              <h4 className="font-medium text-gray-700 mb-2">Portion Information</h4>
+              <div className="grid grid-cols-1 gap-2">
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Visible Portion</p>
+                  <p className="text-gray-700">{analysis.portionSize}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Standard Serving</p>
+                  <p className="text-gray-700">{analysis.standardServingSize}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Relative Size</p>
+                  <p className="text-gray-700">{analysis.actualAmountDescription} {analysis.relativePortionSize ? `(${analysis.relativePortionSize.toFixed(1)}x)` : ''}</p>
+                </div>
+                <div className="mt-1 pt-1 border-t border-amber-200">
+                  <p className="text-xs text-amber-700">The nutritional values above are calculated based on the actual portion visible in the image.</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mb-6">
+              <h4 className="font-medium text-gray-700 mb-1">Nutrition Data Source</h4>
+              <p className="text-gray-600">{analysis.nutritionSource}</p>
             </div>
             
             <div className="flex justify-between">

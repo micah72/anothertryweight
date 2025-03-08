@@ -17,6 +17,8 @@ const MealPlanner = () => {
   const [loadError, setLoadError] = useState(null);
   const [aiSuggestions, setAiSuggestions] = useState({});
   const [generatingAiSuggestions, setGeneratingAiSuggestions] = useState(false);
+  // Track if we've already loaded suggestions for this session
+  const [suggestionsLoaded, setSuggestionsLoaded] = useState(false);
   const [tomorrowDate, setTomorrowDate] = useState(() => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -163,13 +165,23 @@ const MealPlanner = () => {
       
       // Update the AI suggestions for the current date
       const dateKey = selectedDate.toISOString().split('T')[0];
-      setAiSuggestions(prev => ({
-        ...prev,
+      const updatedSuggestions = {
+        ...aiSuggestions,
         [dateKey]: {
-          ...prev[dateKey],
+          ...(aiSuggestions[dateKey] || {}),
           [mealType]: suggestion
         }
-      }));
+      };
+      
+      setAiSuggestions(updatedSuggestions);
+      
+      // Save updated AI suggestions to database
+      try {
+        await dbService.saveAiMealSuggestions(user.uid, updatedSuggestions);
+        console.log('Saved updated AI meal suggestion to database');
+      } catch (error) {
+        console.error('Error saving AI meal suggestion:', error);
+      }
       
       // Update the new meal form with AI suggestion
       setNewMeal({
@@ -252,6 +264,7 @@ const MealPlanner = () => {
   
   // Generate AI meal suggestions for today and tomorrow
   const generateAiMealSuggestionsForDays = async () => {
+    // Allow manual regeneration regardless of suggestionsLoaded state
     if (!user || refrigeratorItems.length === 0) return;
     
     try {
@@ -306,6 +319,14 @@ const MealPlanner = () => {
       
       setAiSuggestions(newSuggestions);
       console.log('Generated AI meal suggestions:', newSuggestions);
+      
+      // Save AI suggestions to database
+      try {
+        await dbService.saveAiMealSuggestions(user.uid, newSuggestions);
+        console.log('Saved AI meal suggestions to database');
+      } catch (error) {
+        console.error('Error saving AI meal suggestions:', error);
+      }
     } catch (error) {
       console.error('Error generating AI meal suggestions:', error);
       setAiError(`Error generating AI meal suggestions: ${error.message || 'Unknown error'}`);
@@ -377,13 +398,23 @@ const MealPlanner = () => {
       
       // Update the AI suggestions for the current date
       const dateKey = selectedDate.toISOString().split('T')[0];
-      setAiSuggestions(prev => ({
-        ...prev,
+      const updatedSuggestions = {
+        ...aiSuggestions,
         [dateKey]: {
-          ...prev[dateKey],
+          ...(aiSuggestions[dateKey] || {}),
           [selectedMealTypeForIngredients]: suggestion
         }
-      }));
+      };
+      
+      setAiSuggestions(updatedSuggestions);
+      
+      // Save updated AI suggestions to database
+      try {
+        await dbService.saveAiMealSuggestions(user.uid, updatedSuggestions);
+        console.log('Saved updated AI meal suggestion with ingredients to database');
+      } catch (error) {
+        console.error('Error saving AI meal suggestion with ingredients:', error);
+      }
       
       // Update the new meal form with AI suggestion
       setNewMeal({
@@ -429,17 +460,47 @@ const MealPlanner = () => {
     loadMeals();
   }, [selectedDate, user]);
   
+  // Load AI suggestions from database
+  const loadAiSuggestions = async () => {
+    if (!user) return;
+    
+    try {
+      setLoadError(null);
+      setGeneratingAiSuggestions(true);
+      
+      const savedSuggestions = await dbService.getAiMealSuggestions(user.uid);
+      if (savedSuggestions && Object.keys(savedSuggestions).length > 0) {
+        setAiSuggestions(savedSuggestions);
+        setSuggestionsLoaded(true); // Mark suggestions as loaded
+        console.log('Loaded AI meal suggestions from database:', savedSuggestions);
+      } else {
+        console.log('No saved AI meal suggestions found in database');
+        // Don't mark as loaded - will trigger generation if needed
+      }
+    } catch (error) {
+      console.error('Error loading AI meal suggestions:', error);
+      setLoadError(`Error loading AI meal suggestions: ${error.message || 'Unknown error'}`);
+    } finally {
+      setGeneratingAiSuggestions(false);
+    }
+  };
+  
   useEffect(() => {
     loadRefrigeratorItems();
     loadPastMeals();
+    loadAiSuggestions();
   }, [user]);
   
-  // Generate AI meal suggestions for today and tomorrow when refrigerator items change
-  useEffect(() => {
-    if (user && refrigeratorItems.length > 0 && pastMeals.length > 0) {
+  // Manual refresh button handler
+  const handleRefreshSuggestions = () => {
+    if (user && refrigeratorItems.length > 0) {
       generateAiMealSuggestionsForDays();
     }
-  }, [user, refrigeratorItems, pastMeals]);
+  };
+  
+  // Generate AI meal suggestions for today and tomorrow only if we don't have saved suggestions
+  // and only when explicitly requested via button click
+  // We no longer auto-generate suggestions when loading the page
 
   return (
     <div className="max-w-4xl mx-auto p-4">
@@ -474,7 +535,7 @@ const MealPlanner = () => {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <button
-              onClick={generateAiMealSuggestionsForDays}
+              onClick={handleRefreshSuggestions}
               className="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded flex items-center text-sm"
               disabled={generatingAiSuggestions || refrigeratorItems.length === 0}
             >
