@@ -15,14 +15,45 @@
     <link rel="apple-touch-startup-image" href="/splash/launch-1125x2436.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
     <link rel="apple-touch-startup-image" href="/splash/launch-1242x2208.png" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
     <style>
-      /* Fix for iOS status bar */
+      /* Fix for iOS status bar and bottom bar */
       :root {
         --sat: env(safe-area-inset-top);
+        --sab: env(safe-area-inset-bottom);
+        --sal: env(safe-area-inset-left);
+        --sar: env(safe-area-inset-right);
+        background-color: #3d7fef;
+      }
+      
+      html {
+        background-color: #3d7fef;
+        height: 100%;
+        min-height: 100%;
+        width: 100%;
+        overflow-x: hidden;
+        position: relative;
       }
       
       body {
         padding: 0;
         margin: 0;
+        background-color: #3d7fef;
+        min-height: 100vh;
+        min-height: -webkit-fill-available;
+        width: 100%;
+        position: relative;
+        overflow-x: hidden;
+      }
+      
+      #root {
+        min-height: 100vh;
+        min-height: -webkit-fill-available;
+        background-color: #3d7fef;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        max-width: 100vw;
+        overflow-x: hidden;
+        position: relative;
       }
       
       /* Status bar color fix */
@@ -37,6 +68,26 @@
           background-color: #3d7fef;
           z-index: 10000;
           display: block;
+        }
+        
+        /* Bottom bar color fix */
+        body::after {
+          content: "";
+          width: 100%;
+          height: env(safe-area-inset-bottom, 20px);
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          background-color: #3d7fef;
+          z-index: 10000;
+          display: block;
+        }
+      }
+      
+      /* Viewport height fix for mobile browsers */
+      @supports (-webkit-touch-callout: none) {
+        html, body, #root {
+          height: -webkit-fill-available;
         }
       }
     </style>

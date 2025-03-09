@@ -586,7 +586,7 @@ const MealPlanner = () => {
       </div>
 
       {/* Date Tabs */}
-      <div className="flex mb-4 border-b">
+      <div className="flex mb-4">
         <button
           className={`py-2 px-4 font-medium ${selectedDate.toISOString().split('T')[0] === new Date().toISOString().split('T')[0] ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
           onClick={() => {

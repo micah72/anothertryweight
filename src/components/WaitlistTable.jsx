@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot, doc, updateDoc, setDoc, getDocs, Timestamp } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, doc, updateDoc, setDoc, getDocs, Timestamp, where } from 'firebase/firestore';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { db } from '../firebase/config';
 import { useAuth } from '../contexts/AuthContext';
@@ -246,22 +246,123 @@ const WaitlistTable = () => {
     try {
       setProcessingUser(entry.id);
       
-      // Generate a unique ID for the user
-      const uid = entry.uid || `waitlist_${Date.now().toString()}${Math.random().toString(36).substring(2, 15)}`;
+      // Generate a secure password
+      const generatedPassword = generatePassword();
       
-      console.log(`Approving user ${entry.email} with ID ${uid}`);
+      console.log(`Approving user ${entry.email} with generated password`);
       
-      // Add user to approved_users collection
+      // Try to find if this user already exists in Firebase Auth
+      let existingUser = false;
+      let uid;
+      
+      // First check for existing auth account by trying to sign in with various methods
+      try {
+        // Check if the user exists in Firebase Auth by sending a password reset email
+        // This is a non-destructive way to check if an email is registered
+        await authService.resetPassword(entry.email);
+        console.log(`User ${entry.email} exists in Firebase Auth, password reset email sent`);
+        existingUser = true;
+        
+        // Try to find the UID from existing records
+        try {
+          // Check in users collection
+          const usersRef = collection(db, 'users');
+          const q = query(usersRef, where('email', '==', entry.email));
+          const querySnapshot = await getDocs(q);
+          
+          if (!querySnapshot.empty) {
+            uid = querySnapshot.docs[0].id;
+            console.log(`Found existing user with UID: ${uid}`);
+          }
+        } catch (findError) {
+          console.log('Error finding existing user:', findError);
+        }
+        
+        if (!uid) {
+          // Generate a temporary UID if we couldn't find the real one
+          uid = `existing_${Date.now().toString()}${Math.random().toString(36).substring(2, 15)}`;
+          console.log(`Generated temporary UID for existing user: ${uid}`);
+        }
+        
+        // Alert the admin that we're working with an existing account
+        alert(`Note: The user ${entry.email} already has a Firebase account. We've sent them a password reset email so they can set their own password. We'll still create the necessary database records.`);
+      } catch (resetError) {
+        // If password reset fails, the user likely doesn't exist
+        console.log(`User ${entry.email} does not exist in Firebase Auth yet:`, resetError);
+        existingUser = false;
+      }
+      
+      // If user doesn't exist, create a new Firebase Authentication account
+      if (!existingUser) {
+        try {
+          // Create the Firebase Auth account
+          const user = await authService.createUser(entry.email, generatedPassword, {
+            name: entry.name || '',
+            phone: entry.phone || '',
+            waitlistId: entry.id,
+            isApproved: true,
+            created_at: new Date(),
+            updated_at: new Date(),
+            role: 'regular'
+          });
+          
+          if (!user || !user.uid) {
+            throw new Error('Failed to create Firebase authentication account');
+          }
+          
+          uid = user.uid;
+          console.log(`Successfully created Firebase Auth account for ${entry.email} with ID ${uid}`);
+          
+          // Verify the account works
+          const verifyResult = await authService.testCredentials(entry.email, generatedPassword);
+          if (!verifyResult.success) {
+            throw new Error('Created account but couldn\'t verify credentials');
+          }
+          console.log('Credentials verified successfully!');
+          
+        } catch (authError) {
+          // Handle the case where the email is already in use
+          if (authError.code === 'auth/email-already-in-use') {
+            console.log('Email already in use, will update database records only');
+            existingUser = true;
+            
+            // Send password reset email to the user
+            try {
+              await authService.resetPassword(entry.email);
+              alert(`The email ${entry.email} is already registered. We've sent a password reset email to the user so they can set their own password. We'll still create the necessary database records.`);
+            } catch (resetError) {
+              console.error('Error sending password reset:', resetError);
+            }
+            
+            // Generate a temporary UID
+            uid = `existing_${Date.now().toString()}${Math.random().toString(36).substring(2, 15)}`;
+          } else {
+            // For other errors, alert and stop
+            console.error('Error creating Firebase auth user:', authError);
+            alert(`Could not create login account: ${authError.message}. Please try again or contact support.`);
+            throw new Error(`Failed to create authentication account: ${authError.message}`);
+          }
+        }
+      } else if (!uid) {
+        // Use entry's ID if no UID was determined
+        uid = entry.uid || `waitlist_${Date.now().toString()}${Math.random().toString(36).substring(2, 15)}`;
+      }
+      
+      // Now that we have a verified Firebase Auth account, update the collections
+      
+      // Add user to approved_users collection with password
       await setDoc(doc(db, 'approved_users', uid), {
         email: entry.email,
         approvedAt: new Date(),
         waitlistId: entry.id,
         name: entry.name || '',
         phone: entry.phone || '',
-        isApproved: true
+        isApproved: true,
+        tempPassword: generatedPassword,
+        passwordCreatedAt: new Date().toISOString()
       });
       
-      // Add user to users collection with role set to 'regular'
+      // Add user to users collection with role set to 'regular' and password
       await setDoc(doc(db, 'users', uid), {
         email: entry.email,
         created_at: new Date(),
@@ -269,26 +370,46 @@ const WaitlistTable = () => {
         role: 'regular',
         isApproved: true,
         name: entry.name || '',
-        phone: entry.phone || ''
+        phone: entry.phone || '',
+        tempPassword: generatedPassword,
+        passwordCreatedAt: new Date().toISOString()
       });
       
-      // Update waitlist entry status
+      // Update waitlist entry status and store password
       await updateDoc(doc(db, 'waitlist', entry.id), {
         status: 'approved',
         approvedAt: new Date(),
-        uid: uid
+        uid: uid,
+        tempPassword: generatedPassword,
+        lastUsedPassword: generatedPassword,
+        passwordCreatedAt: new Date().toISOString()
       });
       
       // Update the entry in the local state
       setWaitlistEntries(prev => 
         prev.map(e => 
           e.id === entry.id 
-            ? {...e, status: 'approved', uid, approvedAt: new Date()} 
+            ? {
+                ...e, 
+                status: 'approved', 
+                uid, 
+                approvedAt: new Date(),
+                tempPassword: generatedPassword,
+                lastUsedPassword: generatedPassword
+              } 
             : e
         )
       );
       
-      alert(`User ${entry.email} has been approved as a regular user!`);
+      // Show password to admin
+      setCurrentEntry({...entry, tempPassword: generatedPassword, email: entry.email});
+      setPassword(generatedPassword);
+      setShowPassword(true);
+      setAccountCreated(true);
+      setShowPasswordModal(true);
+      
+      console.log(`User ${entry.email} has been fully approved with ID ${uid} and can now log in`);
+      
     } catch (error) {
       console.error('Error approving user:', error);
       alert(`Error approving user: ${error.message}`);

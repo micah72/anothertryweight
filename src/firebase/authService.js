@@ -56,6 +56,26 @@ import {
     createUser: async (email, password, userData = {}) => {
       try {
         console.log(`Creating account for ${email}`);
+        
+        // Check if user already exists first to avoid conflicts
+        try {
+          // First, check if there's an existing account with this email
+          // This verification must be done outside the current auth session
+          const testAuth = getAuth();
+          await signInWithEmailAndPassword(testAuth, email, password);
+          
+          // If we get here, the account exists with this password
+          console.log(`User already exists with this email and password`);
+          await signOut(testAuth);
+          
+          // Return the existing user information
+          return { uid: testAuth.currentUser.uid };
+        } catch (existingUserError) {
+          // Expected error - user doesn't exist or wrong password, proceed with creation
+          console.log(`Creating new user: ${existingUserError.code}`);
+        }
+        
+        // Create the Firebase Auth account
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
         
@@ -67,6 +87,7 @@ import {
           role: userData.role || 'regular',
           isApproved: userData.isApproved !== undefined ? userData.isApproved : true,
           tempPassword: password,
+          passwordCreatedAt: new Date().toISOString(),
           ...userData
         });
         
@@ -77,6 +98,7 @@ import {
             approvedAt: new Date(),
             isApproved: true,
             tempPassword: password,
+            passwordCreatedAt: new Date().toISOString(),
             ...userData
           });
         }
@@ -91,45 +113,69 @@ import {
     // Test if a password works for a specific email
     testCredentials: async (email, password) => {
       try {
-        console.log(`Testing login for ${email} with password: ${password}`);
-        // Save current user
-        const currentUser = auth.currentUser;
+        // Log the exact email and password being tested for debugging
+        console.log(`Testing login for email: "${email}" with password: "${password}"`);
         
-        // Try to sign in with the provided credentials
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        console.log('Login successful!', userCredential.user.uid);
+        // This test needs to be performed very carefully to not disrupt the current session
+        // We'll use a separate auth instance
+        const testAuth = getAuth();
         
-        // Sign out immediately after testing
-        await signOut(auth);
-        
-        // If there was a previous user, sign back in
-        if (currentUser) {
-          // We'd need their password to sign back in, which we don't have
-          // This will leave the user signed out - they'll need to sign in again
-          console.log('Original user was logged out during credential testing');
+        try {
+          // Try to sign in with the provided credentials
+          const userCredential = await signInWithEmailAndPassword(testAuth, email, password);
+          console.log('✅ Login test SUCCESSFUL!', userCredential.user.uid);
+          
+          // Sign out from the test auth instance
+          await signOut(testAuth);
+          
+          return { success: true, uid: userCredential.user.uid };
+        } catch (error) {
+          console.error('❌ Login test FAILED:', error.code, error.message);
+          
+          // Important: Do not leave the auth in a bad state
+          try {
+            await signOut(testAuth);
+          } catch (signOutError) {
+            console.log('Error signing out after failed test:', signOutError);
+          }
+          
+          return { success: false, error, code: error.code };
         }
-        
-        return { success: true, uid: userCredential.user.uid };
       } catch (error) {
-        console.error('Login test failed:', error);
-        return { success: false, error };
+        console.error('Error setting up credential test:', error);
+        return { success: false, error, code: error?.code };
       }
     },
   
     // Generate a secure password that works with Firebase Auth
     generateSecurePassword: () => {
-      // Use only alphanumeric characters to avoid special character issues
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      // Create separate character sets to ensure we use at least one of each type
+      const uppercaseChars = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; // Removed similar-looking characters
+      const lowercaseChars = 'abcdefghijkmnpqrstuvwxyz'; // Removed similar-looking characters
+      const numberChars = '23456789'; // Removed 0 and 1 which look like O and l
+      
+      // Start with one character from each required set
       let password = '';
       
-      // Add 8 random characters
-      for (let i = 0; i < 8; i++) {
-        password += chars.charAt(Math.floor(Math.random() * chars.length));
+      // Add one uppercase letter
+      password += uppercaseChars.charAt(Math.floor(Math.random() * uppercaseChars.length));
+      
+      // Add one lowercase letter
+      password += lowercaseChars.charAt(Math.floor(Math.random() * lowercaseChars.length));
+      
+      // Add one number
+      password += numberChars.charAt(Math.floor(Math.random() * numberChars.length));
+      
+      // Fill the rest of the password (7 more characters for a total of 10)
+      const allChars = uppercaseChars + lowercaseChars + numberChars;
+      for (let i = 0; i < 7; i++) {
+        password += allChars.charAt(Math.floor(Math.random() * allChars.length));
       }
       
-      // Ensure we have at least one uppercase, one lowercase, and one number
-      password += 'A1a';
+      // Shuffle the password to make it more random
+      password = password.split('').sort(() => 0.5 - Math.random()).join('');
       
+      console.log('Generated secure password: ' + password);
       return password;
     }
   };

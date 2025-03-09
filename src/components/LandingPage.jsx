@@ -213,28 +213,29 @@ const LandingPage = () => {
   const deviceClass = isIPad ? 'ipad-device' : isIPhone ? 'iphone-device' : '';
 
   return (
-    <div className="overflow-x-hidden w-full">
+    <div className="overflow-x-hidden w-full min-h-screen" style={{ backgroundColor: '#3d7fef', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Hero Section */}
-      <section className={`bg-gradient-to-r from-blue-500 to-blue-700 w-full ${ipadTouchClass} ${iphoneTouchClass} hero-section ${browserClass} mt-0`} style={{ marginTop: 0, paddingTop: 0 }}>
-        <div className="container mx-auto px-4 safe-padding-left safe-padding-right">
-          <div className={`flex flex-col md:flex-row items-center justify-between gap-8 ${safariFlexClass}`}>
-            <div className="w-full md:max-w-xl lg:max-w-2xl mb-8 md:mb-0">
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 sm:mb-6 leading-tight">
+      <section className="w-full py-12 sm:py-16 md:py-20 lg:py-24" style={{ backgroundColor: '#3d7fef' }}>
+        <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 lg:gap-16 items-center">
+            {/* Text Content */}
+            <div className="order-2 md:order-1">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
                 Snap. Analyze. Plan.<br />Eat Smarter.
               </h1>
               
-              <p className="text-blue-100 text-base sm:text-lg mb-6 sm:mb-8">
+              <p className="text-blue-100 text-lg md:text-xl mb-8 max-w-xl">
                 SnapLicious AI is a comprehensive health and meal planning app that leverages the power of photography and artificial intelligence to transform the way you manage your diet.
               </p>
 
-              <form onSubmit={handleSubmit} className="mb-6 sm:mb-8">
-                <div className={`flex flex-col sm:flex-row gap-3 ${safariFlexClass}`}>
+              <form onSubmit={handleSubmit} className="mb-8">
+                <div className="flex flex-col sm:flex-row gap-3 max-w-md">
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Your email..."
-                    className="flex-grow px-4 py-3 rounded-lg bg-white/10 border border-blue-300 text-white placeholder-blue-100 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent appearance-none"
+                    className="flex-grow px-4 py-3 rounded-lg bg-white/10 border border-blue-300 text-white placeholder-blue-100 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
                     required
                     disabled={isLoading}
                     style={{
@@ -244,14 +245,14 @@ const LandingPage = () => {
                   />
                   <button
                     type="submit"
-                    className={`px-6 py-3 rounded-lg bg-white text-blue-600 font-medium hover:bg-blue-50 transition-colors ${isLoading ? 'opacity-70 cursor-not-allowed' : ''} ${ipadTouchClass} ${iphoneTouchClass}`}
+                    className={`px-6 py-3 rounded-lg bg-white text-blue-600 font-medium hover:bg-blue-50 transition-colors ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
                     disabled={isLoading}
                     style={{
                       WebkitTapHighlightColor: 'transparent'
                     }}
                   >
                     {isLoading ? (
-                      <span className={`flex items-center ${safariFlexClass}`}>
+                      <span className="flex items-center justify-center">
                         <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -271,29 +272,33 @@ const LandingPage = () => {
               </form>
 
               {isSubmitted && (
-                <div className="text-center max-w-md mx-auto bg-green-50 p-4 rounded-lg shadow mt-8">
-                  <h3 className="text-xl font-bold text-green-800 mb-2">
-                    <CheckCircle2 className="inline-block mr-2" size={24} />
+                <div className="bg-green-50 p-4 rounded-lg shadow mb-8 max-w-md">
+                  <h3 className="text-xl font-bold text-green-800 mb-2 flex items-center">
+                    <CheckCircle2 className="mr-2" size={24} />
                     Success!
                   </h3>
                   <p className="text-green-700">{successMessage}</p>
                 </div>
               )}
 
-              <div className="text-blue-100">
-                Join the <span className="font-medium text-white">2,000+</span> members who have already signed up
+              <div className="text-blue-100 text-lg">
+                <span className="font-medium text-white">Join now</span> and take control of your health from day one!
               </div>
             </div>
             
-            <div className="w-full sm:w-3/4 md:w-1/2 lg:max-w-md mx-auto md:mx-0">
-              <div className="bg-white rounded-lg shadow-xl overflow-hidden hardware-accelerated">
-                <img 
-                  src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
-                  alt="Beautiful food arrangement" 
-                  className="w-full h-48 sm:h-64 object-cover"
-                  loading="eager"
-                  decoding="async"
-                />
+            {/* Image */}
+            <div className="order-1 md:order-2 flex justify-center md:justify-end">
+              <div className="w-full max-w-md lg:max-w-lg relative">
+                <div className="bg-white rounded-2xl shadow-xl overflow-hidden transform transition-transform hover:scale-[1.02] duration-300">
+                  <img 
+                    src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+                    alt="Beautiful food arrangement" 
+                    className="w-full h-64 sm:h-72 md:h-80 lg:h-96 object-cover"
+                    loading="eager"
+                    decoding="async"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-blue-900/20 to-transparent pointer-events-none"></div>
+                </div>
               </div>
             </div>
           </div>
@@ -687,22 +692,393 @@ const LandingPage = () => {
         .landing-header div {
           border: none !important;
         }
+        
+        /* Critical fixes for the landing page */
+        html, body, #root {
+          background-color: #3d7fef !important;
+          min-height: 100vh !important;
+          min-height: -webkit-fill-available !important;
+          overflow-x: hidden !important;
+          width: 100% !important;
+          position: relative !important;
+        }
+        
+        /* Ensure the background color extends through the entire page */
+        html::after,
+        body::after,
+        #root::after,
+        .overflow-x-hidden::after {
+          content: "" !important;
+          position: fixed !important;
+          left: 0 !important;
+          right: 0 !important;
+          bottom: 0 !important;
+          height: 100vh !important;
+          z-index: -1 !important;
+          background-color: #3d7fef !important;
+        }
 
         /* Media query for mobile devices */
         @media (max-width: 767px) {
           .landing-page {
-            background-color: #3d7fef;
+            background-color: #3d7fef !important;
+            min-height: 100vh !important;
           }
           
           /* Fix for iPhone notch area */
           .notch-area-fix {
             background-color: #3d7fef !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            height: env(safe-area-inset-top) !important;
+            z-index: 9999 !important;
+          }
+          
+          /* Fix for white bar at bottom */
+          body::after {
+            content: "" !important;
+            display: block !important;
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            height: max(env(safe-area-inset-bottom, 20px), 20px) !important;
+            background-color: #3d7fef !important;
+            z-index: 9998 !important;
+          }
+          
+          /* Make sure the page fills the entire viewport */
+          #root, .overflow-x-hidden {
+            min-height: 100vh !important;
+            min-height: -webkit-fill-available !important;
+            background-color: #3d7fef !important;
+          }
+          
+          /* Ensure the content doesn't end prematurely */
+          .overflow-x-hidden::after {
+            content: "" !important;
+            display: block !important;
+            min-height: 50px !important;
+            background-color: #3d7fef !important;
+          }
+        }
+      `}</style>
+
+      {/* Adding iPad-specific menu fixes with hamburger menu */}
+      <style>{`
+        /* iPad-specific navigation fixes with hamburger menu */
+        @media only screen and (min-width: 768px) and (max-width: 1112px) {
+          /* Hide desktop menu on iPad */
+          nav .hidden.md\\:flex {
+            display: none !important;
+          }
+          
+          /* Show mobile menu button on iPad */
+          nav .hidden.md\\:hidden {
+            display: flex !important;
+          }
+          
+          /* Create a semi-transparent overlay for the entire screen when menu is open */
+          body::before {
+            content: '';
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
-            height: env(safe-area-inset-top);
-            z-index: 9999;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0);
+            backdrop-filter: blur(0px);
+            -webkit-backdrop-filter: blur(0px);
+            z-index: 40;
+            pointer-events: none;
+            transition: all 0.3s ease;
+          }
+          
+          /* When menu is open, darken the overlay and enable pointer events */
+          body.menu-open::before {
+            background: rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(1px);
+            -webkit-backdrop-filter: blur(1px);
+            pointer-events: auto;
+          }
+          
+          /* Improved mobile menu styling */
+          nav .mobile-menu {
+            display: block;
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 300px;
+            height: 100vh;
+            background: linear-gradient(to right, rgba(61, 127, 239, 0.3), rgba(61, 127, 239, 0.5)); /* Gradient for better depth */
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 50;
+            transform: translateX(100%);
+            transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1); /* Smoother animation */
+            padding-top: calc(env(safe-area-inset-top) + 20px);
+            overflow-y: auto;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            border-left: 1px solid rgba(255, 255, 255, 0.3);
+          }
+          
+          /* Add a semi-transparent vertical stripe to the menu for better visual hierarchy */
+          nav .mobile-menu::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 60px;
+            height: 100%;
+            background: linear-gradient(to right, rgba(61, 127, 239, 0.2), transparent);
+            z-index: -1;
+            pointer-events: none;
+          }
+          
+          /* Add spacing at the top of the menu for the close button */
+          nav .mobile-menu::before {
+            content: '';
+            display: block;
+            height: 60px;
+          }
+          
+          /* Animation for open menu */
+          nav .mobile-menu.open {
+            transform: translateX(0);
+          }
+          
+          /* Style the hamburger menu button */
+          nav .md\\:hidden button {
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem;
+            margin-right: 0.5rem;
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            z-index: 51;
+            transition: all 0.2s ease;
+          }
+          
+          /* Style for menu close button */
+          nav .mobile-menu-close {
+            position: absolute;
+            top: calc(env(safe-area-inset-top) + 15px);
+            right: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+          }
+          
+          nav .mobile-menu-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+          }
+          
+          /* Fix logo size for iPad */
+          nav .site-logo {
+            font-size: 1.25rem !important;
+          }
+          
+          /* Ensure navigation container fits iPad */
+          nav .max-w-7xl {
+            max-width: 100% !important;
+            padding-left: 16px !important;
+            padding-right: 16px !important;
+          }
+          
+          /* Improve mobile menu items styling on iPad */
+          nav .mobile-menu a,
+          nav .mobile-menu button {
+            padding: 12px 24px !important;
+            font-size: 1.05rem !important;
+            display: flex !important;
+            align-items: center !important;
+            color: white !important;
+            border-left: 3px solid transparent;
+            transition: all 0.2s ease;
+            margin-bottom: 4px;
+            font-weight: 500 !important;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            background-color: rgba(61, 127, 239, 0.3) !important;
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+          }
+          
+          /* Space between icon and text */
+          nav .mobile-menu a svg,
+          nav .mobile-menu button svg {
+            margin-right: 16px !important;
+            filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+            opacity: 1;
+          }
+          
+          /* Add a cleaner hover and active effect */
+          nav .mobile-menu a:hover,
+          nav .mobile-menu button:hover,
+          nav .mobile-menu a.active,
+          nav .mobile-menu button.active {
+            background-color: rgba(255, 255, 255, 0.25) !important;
+            border-left: 3px solid white;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+          }
+          
+          /* Add animations for menu items */
+          nav .mobile-menu a,
+          nav .mobile-menu button {
+            opacity: 0;
+            transform: translateX(20px);
+            transition: opacity 0.3s ease, transform 0.3s ease, background-color 0.2s ease, border-left 0.2s ease;
+          }
+          
+          /* When menu is open, animate in the items one by one */
+          nav .mobile-menu.open a,
+          nav .mobile-menu.open button {
+            opacity: 1;
+            transform: translateX(0);
+          }
+          
+          /* Stagger the animation for each item */
+          nav .mobile-menu.open a:nth-child(1),
+          nav .mobile-menu.open button:nth-child(1) { transition-delay: 0.1s; }
+          nav .mobile-menu.open a:nth-child(2),
+          nav .mobile-menu.open button:nth-child(2) { transition-delay: 0.15s; }
+          nav .mobile-menu.open a:nth-child(3),
+          nav .mobile-menu.open button:nth-child(3) { transition-delay: 0.2s; }
+          nav .mobile-menu.open a:nth-child(4),
+          nav .mobile-menu.open button:nth-child(4) { transition-delay: 0.25s; }
+          nav .mobile-menu.open a:nth-child(5),
+          nav .mobile-menu.open button:nth-child(5) { transition-delay: 0.3s; }
+          nav .mobile-menu.open a:nth-child(6),
+          nav .mobile-menu.open button:nth-child(6) { transition-delay: 0.35s; }
+          nav .mobile-menu.open a:nth-child(7),
+          nav .mobile-menu.open button:nth-child(7) { transition-delay: 0.4s; }
+        }
+        
+        /* Script to handle body class for menu backdrop */
+        document.addEventListener('DOMContentLoaded', function() {
+          const menuButton = document.querySelector('nav .md\\:hidden button');
+          const closeButton = document.querySelector('nav .mobile-menu-close');
+          const menuItems = document.querySelectorAll('nav .mobile-menu a, nav .mobile-menu button');
+          
+          if (menuButton) {
+            menuButton.addEventListener('click', function() {
+              document.body.classList.add('menu-open');
+            });
+          }
+          
+          if (closeButton) {
+            closeButton.addEventListener('click', function() {
+              document.body.classList.remove('menu-open');
+            });
+          }
+          
+          /* Close menu when clicking outside */
+          document.addEventListener('click', function(e) {
+            if (document.body.classList.contains('menu-open') && 
+                !e.target.closest('nav .mobile-menu') && 
+                !e.target.closest('nav .md\\:hidden button')) {
+              document.body.classList.remove('menu-open');
+            }
+          });
+          
+          /* Close menu when clicking menu items */
+          menuItems.forEach(item => {
+            item.addEventListener('click', function() {
+              document.body.classList.remove('menu-open');
+            });
+          });
+        });
+      `}</style>
+
+      {/* Adding mobile-specific spacing fixes */}
+      <style>{`
+        /* Mobile spacing improvements */
+        @media only screen and (max-width: 767px) {
+          /* Improve container padding */
+          .container {
+            padding-left: 20px !important;
+            padding-right: 20px !important;
+            width: 100% !important;
+            max-width: 100% !important;
+          }
+          
+          /* Add better spacing for section padding */
+          section {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+          }
+          
+          /* Fix hero section content for more breathing room */
+          .hero-section .container {
+            padding-left: 24px !important;
+            padding-right: 24px !important;
+          }
+          
+          /* Improve hero content spacing */
+          .hero-section h1 {
+            margin-left: -1px !important; /* Optical alignment */
+          }
+          
+          /* Fix form padding */
+          form {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+          }
+          
+          /* Ensure the waitlist button aligns properly */
+          button[type="submit"] {
+            width: 100% !important;
+            margin-top: 12px !important;
+          }
+          
+          /* Better image container proportions */
+          .bg-white.rounded-2xl {
+            margin-left: -4px !important;
+            margin-right: -4px !important;
+            width: calc(100% + 8px) !important;
+            max-width: unset !important;
+          }
+          
+          /* Make sure food grid items have proper spacing */
+          .food-grid {
+            padding-left: 16px !important;
+            padding-right: 16px !important;
+          }
+          
+          /* Fix any possible horizontal scrolling */
+          .overflow-x-hidden {
+            overflow-x: hidden !important;
+            width: 100% !important;
+            position: relative !important;
+          }
+          
+          /* Make email input full width in mobile */
+          input[type="email"] {
+            width: 100% !important;
+          }
+          
+          /* Fix vertical spacing between sections */
+          .py-12 {
+            padding-top: 40px !important;
+            padding-bottom: 40px !important;
+          }
+          
+          /* Add safe area padding for notched devices */
+          .safe-padding-left {
+            padding-left: max(env(safe-area-inset-left), 20px) !important;
+          }
+          
+          .safe-padding-right {
+            padding-right: max(env(safe-area-inset-right), 20px) !important;
           }
         }
       `}</style>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, getDocs, doc, updateDoc, deleteDoc, getDoc, setDoc } from 'firebase/firestore';
+import { collection, query, getDocs, doc, updateDoc, deleteDoc, getDoc, setDoc, where } from 'firebase/firestore';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, deleteUser as deleteFirebaseUser } from 'firebase/auth';
 import { db } from '../firebase/config';
 import { useAuth } from '../contexts/AuthContext';
@@ -300,16 +300,60 @@ const UserManagement = () => {
     }
     
     try {
-      // Delete from users collection
-      await deleteDoc(doc(db, 'users', userId));
+      console.log(`Attempting to fully delete user with ID: ${userId}`);
       
-      // Note: We can't delete the Firebase Auth user directly from client SDK
-      // This would require Firebase Admin SDK via Cloud Functions
+      // Find the user to get their email and waitlistId
+      const userToDelete = users.find(u => u.id === userId);
+      if (!userToDelete) {
+        throw new Error('User not found in local state');
+      }
+      
+      console.log(`Deleting user: ${userToDelete.email}`);
+      
+      // 1. Delete from users collection
+      await deleteDoc(doc(db, 'users', userId));
+      console.log('Deleted from users collection');
+      
+      // 2. Delete from approved_users collection
+      try {
+        await deleteDoc(doc(db, 'approved_users', userId));
+        console.log('Deleted from approved_users collection');
+      } catch (approvedError) {
+        console.log('User not found in approved_users or error:', approvedError);
+      }
+      
+      // 3. Find and delete from waitlist if exists
+      if (userToDelete.waitlistId) {
+        try {
+          await deleteDoc(doc(db, 'waitlist', userToDelete.waitlistId));
+          console.log(`Deleted from waitlist with ID: ${userToDelete.waitlistId}`);
+        } catch (waitlistError) {
+          console.log('Error deleting from waitlist:', waitlistError);
+        }
+      } else {
+        // If no known waitlistId, try to find by email
+        try {
+          const waitlistRef = collection(db, 'waitlist');
+          const q = query(waitlistRef, where('email', '==', userToDelete.email));
+          const querySnapshot = await getDocs(q);
+          
+          if (!querySnapshot.empty) {
+            for (const doc of querySnapshot.docs) {
+              await deleteDoc(doc.ref);
+              console.log(`Found and deleted waitlist entry with ID: ${doc.id}`);
+            }
+          } else {
+            console.log('No waitlist entries found for this email');
+          }
+        } catch (findWaitlistError) {
+          console.log('Error finding waitlist entries:', findWaitlistError);
+        }
+      }
       
       // Update local state
       setUsers(users.filter(user => user.id !== userId));
       
-      alert('User removed from the database. Note: The Firebase Authentication account still exists.');
+      alert('User successfully removed from all database collections.');
     } catch (error) {
       console.error('Error deleting user:', error);
       alert(`Error deleting user: ${error.message}`);
