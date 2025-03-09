@@ -1082,6 +1082,387 @@ const LandingPage = () => {
           }
         }
       `}</style>
+
+      {/* Small screen specific improvements */}
+      <style>{`
+        /* Extra small phone specific improvements */
+        @media only screen and (max-width: 375px) {
+          /* Smaller logo font size for very small screens */
+          nav .site-logo {
+            font-size: 1.3rem !important;
+          }
+          
+          /* Adjust admin badge for very small screens */
+          nav .flex-shrink-0.flex.items-center .ml-2 {
+            transform: scale(0.9) !important;
+            transform-origin: left center !important;
+          }
+          
+          /* Adjust menu toggle button position */
+          nav .md\\:hidden button {
+            margin-right: 0 !important;
+            padding: 0.25rem !important;
+          }
+          
+          /* Make page titles more compact */
+          h1.text-3xl, h2.text-3xl {
+            font-size: 1.75rem !important;
+            line-height: 1.2 !important;
+          }
+          
+          /* Adjust subheadings */
+          h1 + p, h2 + p {
+            font-size: 0.875rem !important;
+            line-height: 1.4 !important;
+          }
+          
+          /* Adjust card layouts */
+          .food-card, .feature-card {
+            margin-left: -8px !important;
+            margin-right: -8px !important;
+            width: calc(100% + 16px) !important;
+          }
+          
+          /* Make buttons fit small screens better */
+          button, .button-base, a.button-base {
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+            font-size: 0.875rem !important;
+          }
+          
+          /* Adjust food card grid */
+          .food-grid {
+            gap: 1rem !important;
+            margin-left: -4px !important;
+            margin-right: -4px !important;
+            width: calc(100% + 8px) !important;
+          }
+          
+          /* Adjust card content */
+          .food-card h3, .feature-card h3 {
+            font-size: 1rem !important;
+          }
+          
+          /* Ensure Add Food Photo button is properly sized */
+          a[href$="/analyze"] {
+            padding: 0.5rem 1rem !important;
+            font-size: 0.875rem !important;
+          }
+          
+          /* Fix image proportions */
+          .food-card img, .card-image {
+            height: 9rem !important;
+          }
+          
+          /* Food journal title and subtitle spacing */
+          #food-journal-title {
+            margin-bottom: 0.25rem !important;
+          }
+          
+          #food-journal-subtitle {
+            margin-bottom: 1rem !important;
+          }
+          
+          /* Ensure food item titles are properly sized */
+          .food-name {
+            font-size: 1.125rem !important;
+          }
+          
+          /* Adjust date display */
+          .food-date {
+            font-size: 0.75rem !important;
+          }
+          
+          /* Fix calorie badge */
+          .calorie-badge {
+            font-size: 0.75rem !important;
+            padding: 0.25rem 0.5rem !important;
+          }
+          
+          /* Improve My Food Journal title and caption */
+          .journal-title {
+            font-size: 1.75rem !important;
+            margin-bottom: 0.25rem !important;
+          }
+          
+          .journal-subtitle {
+            font-size: 0.875rem !important;
+            line-height: 1.3 !important;
+            margin-bottom: 1rem !important;
+          }
+          
+          /* Fix Add Food Photo button */
+          .add-photo-btn {
+            font-size: 0.875rem !important;
+            padding: 0.5rem 1rem !important;
+          }
+          
+          /* Adjust the calorie display box */
+          .cal-display {
+            font-size: 0.75rem !important;
+            padding: 0.25rem 0.75rem !important;
+            border-radius: 1rem !important;
+          }
+          
+          /* Fix the food item card spacing */
+          .food-item-card {
+            margin-bottom: 0.75rem !important;
+            padding: 0.75rem !important;
+          }
+          
+          /* More room for content */
+          .container {
+            padding-left: 0.75rem !important;
+            padding-right: 0.75rem !important;
+          }
+          
+          /* Ensure the navigation has proper spacing */
+          nav {
+            padding-left: 0.5rem !important;
+            padding-right: 0.5rem !important;
+          }
+          
+          /* Fix hamburger menu icon size */
+          .hamburger-icon {
+            width: 1.25rem !important;
+            height: 1.25rem !important;
+          }
+        }
+      `}</style>
+
+      {/* Add small screen specific CSS */}
+      <style>{`
+        /* Add safe area padding for notched devices */
+        .safe-padding-left {
+          padding-left: max(env(safe-area-inset-left), 20px) !important;
+        }
+        
+        .safe-padding-right {
+          padding-right: max(env(safe-area-inset-right), 20px) !important;
+        }
+      `}</style>
+
+      {/* Responsive layout improvements */}
+      <style>{`
+        /* Mobile layout improvements (phones less than 768px) */
+        @media only screen and (max-width: 767px) {
+          /* Mobile logo improvements */
+          nav .site-logo {
+            font-size: 1.5rem !important; /* Increase logo font size */
+            padding: 0.5rem 0 !important; /* Add vertical padding for better proportion */
+            letter-spacing: -0.01em !important; /* Slight letter spacing adjustment */
+            font-weight: 700 !important; /* Make font weight bolder */
+          }
+          
+          /* Adjust the container for the logo */
+          nav .flex-shrink-0.flex.items-center {
+            margin-left: 0.5rem !important; /* Add some left margin */
+            flex: 1 !important; /* Allow logo to take more space */
+          }
+          
+          /* Adjust admin badge positioning on mobile */
+          nav .flex-shrink-0.flex.items-center .ml-2 {
+            margin-left: 0.5rem !important; /* Reduce margin for badge */
+            margin-top: 0.15rem !important; /* Slightly adjust vertical alignment */
+          }
+          
+          /* Improve container padding */
+          .container {
+            padding-left: 20px !important;
+            padding-right: 20px !important;
+            width: 100% !important;
+            max-width: 100% !important;
+          }
+          
+          /* Add better spacing for section padding */
+          section {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+          }
+          
+          /* Fix hero section content for more breathing room */
+          .hero-section .container {
+            padding-left: 24px !important;
+            padding-right: 24px !important;
+          }
+          
+          /* Improve hero content spacing */
+          .hero-section h1 {
+            margin-left: -1px !important; /* Optical alignment */
+          }
+          
+          /* Fix form padding */
+          form {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+          }
+          
+          /* Ensure the waitlist button aligns properly */
+          button[type="submit"] {
+            width: 100% !important;
+            margin-top: 12px !important;
+          }
+          
+          /* Better image container proportions */
+          .bg-white.rounded-2xl {
+            margin-left: -4px !important;
+            margin-right: -4px !important;
+            width: calc(100% + 8px) !important;
+            max-width: unset !important;
+          }
+          
+          /* Make sure food grid items have proper spacing */
+          .food-grid {
+            padding-left: 16px !important;
+            padding-right: 16px !important;
+          }
+          
+          /* Fix any possible horizontal scrolling */
+          .overflow-x-hidden {
+            overflow-x: hidden !important;
+            width: 100% !important;
+            position: relative !important;
+          }
+          
+          /* Make email input full width in mobile */
+          input[type="email"] {
+            width: 100% !important;
+          }
+          
+          /* Fix vertical spacing between sections */
+          .py-12 {
+            padding-top: 40px !important;
+            padding-bottom: 40px !important;
+          }
+          
+          /* Add safe area padding for notched devices */
+          .safe-padding-left {
+            padding-left: max(env(safe-area-inset-left), 20px) !important;
+          }
+          
+          .safe-padding-right {
+            padding-right: max(env(safe-area-inset-right), 20px) !important;
+          }
+        }
+        
+        /* Extra small phone specific improvements */
+        @media only screen and (max-width: 375px) {
+          /* Smaller logo font size for very small screens */
+          nav .site-logo {
+            font-size: 1.3rem !important;
+          }
+          
+          /* Adjust admin badge for very small screens */
+          nav .flex-shrink-0.flex.items-center .ml-2 {
+            transform: scale(0.9) !important;
+            transform-origin: left center !important;
+          }
+          
+          /* Adjust menu toggle button position */
+          nav .md\\:hidden button {
+            margin-right: 0 !important;
+            padding: 0.25rem !important;
+          }
+          
+          /* Make page titles more compact */
+          h1.text-3xl, h2.text-3xl {
+            font-size: 1.75rem !important;
+            line-height: 1.2 !important;
+          }
+          
+          /* Adjust subheadings */
+          h1 + p, h2 + p {
+            font-size: 0.875rem !important;
+            line-height: 1.4 !important;
+          }
+          
+          /* Adjust card layouts */
+          .food-card, .feature-card {
+            margin-left: -8px !important;
+            margin-right: -8px !important;
+            width: calc(100% + 16px) !important;
+          }
+          
+          /* Make buttons fit small screens better */
+          button, .button-base, a.button-base {
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+            font-size: 0.875rem !important;
+          }
+          
+          /* Adjust food card grid */
+          .food-grid {
+            gap: 1rem !important;
+            margin-left: -4px !important;
+            margin-right: -4px !important;
+            width: calc(100% + 8px) !important;
+          }
+          
+          /* Adjust card content */
+          .food-card h3, .feature-card h3 {
+            font-size: 1rem !important;
+          }
+          
+          /* Fix image proportions */
+          .food-card img, .card-image {
+            height: 9rem !important;
+          }
+          
+          /* Food journal title and subtitle spacing */
+          .text-blue-600, .text-3xl, .text-4xl, .font-bold {
+            font-size: 1.75rem !important;
+            line-height: 1.2 !important;
+            margin-bottom: 0.25rem !important;
+          }
+          
+          /* Food journal subtitle */
+          .text-gray-500, .text-sm, .md\\:text-base {
+            font-size: 0.875rem !important;
+            line-height: 1.3 !important;
+            margin-bottom: 1rem !important;
+          }
+          
+          /* Ensure food item titles are properly sized */
+          h3.text-lg, h3.font-semibold, .text-gray-900 {
+            font-size: 1.125rem !important;
+          }
+          
+          /* Adjust date display */
+          .text-sm.text-gray-500, time {
+            font-size: 0.75rem !important;
+          }
+          
+          /* Fix calorie badge */
+          .text-blue-600, .font-medium, .rounded-full, .text-sm {
+            font-size: 0.75rem !important;
+            padding: 0.25rem 0.75rem !important;
+          }
+          
+          /* Fix Add Food Photo button */
+          .group, .bg-blue-600, .text-white, .rounded-full, .shadow-md {
+            font-size: 0.875rem !important;
+            padding: 0.5rem 1rem !important;
+          }
+          
+          /* Container spacing */
+          .container {
+            padding-left: 0.75rem !important;
+            padding-right: 0.75rem !important;
+          }
+          
+          /* Navigation spacing */
+          nav {
+            padding-left: 0.5rem !important;
+            padding-right: 0.5rem !important;
+          }
+          
+          /* Hambuger menu icon */
+          svg.w-6, svg.h-6 {
+            width: 1.25rem !important;
+            height: 1.25rem !important;
+          }
+        }
+      `}</style>
     </div>
   );
 };
