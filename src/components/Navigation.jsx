@@ -308,6 +308,7 @@ const Navigation = () => {
                           aria-expanded={openDropdown === item.label}
                           aria-controls={`dropdown-${item.label}`}
                           aria-haspopup="true"
+                          style={{ border: 'none', outline: 'none' }}
                         >
                           <span className="mr-1.5">
                             {React.cloneElement(item.icon, { style: svgStyle })}
@@ -336,6 +337,7 @@ const Navigation = () => {
                                   to={child.path}
                                   className="flex items-center px-4 py-2 text-sm text-white hover:bg-blue-600 whitespace-nowrap"
                                   onClick={handleMobileLinkClick}
+                                  style={{ border: 'none', outline: 'none' }}
                                 >
                                   <span className="mr-2">
                                     {React.cloneElement(child.icon, { style: svgStyle })}
@@ -350,23 +352,25 @@ const Navigation = () => {
                     ) : (
                       item.action ? (
                         <button
-                          onClick={item.action}
-                          className="flex items-center px-3 py-2 rounded-md text-sm font-medium text-white hover:bg-blue-700 focus:outline-none"
+                          onClick={(e) => item.action(e)}
+                          className={`flex items-center px-3 py-2 rounded-md text-sm font-medium text-white hover:bg-blue-700 focus:outline-none ${location.pathname === item.path ? 'bg-blue-700' : ''}`}
+                          style={{ border: 'none', outline: 'none' }}
                         >
                           <span className="mr-1.5">
                             {React.cloneElement(item.icon, { style: svgStyle })}
                           </span>
-                          <span>{item.label}</span>
+                          <span className="inline-block font-bold">{item.label}</span>
                         </button>
                       ) : (
                         <Link
                           to={item.path}
-                          className="flex items-center px-3 py-2 rounded-md text-sm font-medium text-white hover:bg-blue-700"
+                          className={`flex items-center px-3 py-2 rounded-md text-sm font-medium text-white hover:bg-blue-700 ${location.pathname === item.path ? 'bg-blue-700' : ''}`}
+                          style={{ border: 'none', outline: 'none' }}
                         >
                           <span className="mr-1.5">
                             {React.cloneElement(item.icon, { style: svgStyle })}
                           </span>
-                          <span>{item.label}</span>
+                          <span className="inline-block font-bold">{item.label}</span>
                         </Link>
                       )
                     )}
@@ -393,28 +397,24 @@ const Navigation = () => {
             </div>
           </div>
 
-          {/* Mobile menu button */}
-          <button
-            onClick={toggleMobileMenu}
-            className="mobile-menu-btn text-white hover:text-gray-200 focus:outline-none md:hidden"
-            aria-label="Open menu"
-            style={{ background: 'transparent', border: 'none' }}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-7 w-7"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+          {/* Mobile Menu Button */}
+          <div className="flex items-center justify-center md:hidden hamburger-btn-container" style={{ background: 'transparent' }}>
+            <button
+              onClick={toggleMobileMenu}
+              className="p-0 m-0 bg-transparent text-white hover:text-gray-200 focus:outline-none md:hidden"
+              aria-label="Open menu"
+              style={{ 
+                background: 'transparent', 
+                border: 'none', 
+                boxShadow: 'none', 
+                outline: 'none',
+                padding: '0',
+                margin: '0'
+              }}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 6h16M4 12h16M4 18h16"
-              />
-            </svg>
-          </button>
+              <Menu className="h-7 w-7 hamburger-icon" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -424,46 +424,71 @@ const Navigation = () => {
         style={{
           maxHeight: '100vh',
           overflowY: 'auto',
-          zIndex: 9999
+          zIndex: 9999,
+          width: '300px',
+          background: 'linear-gradient(to right, rgba(61, 127, 239, 0.1), rgba(61, 127, 239, 0.2))',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+          transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
+          transition: 'all 0.4s cubic-bezier(0.19, 1, 0.22, 1)',
+          paddingTop: 'calc(env(safe-area-inset-top) + 20px)',
+          boxShadow: 'none',
+          borderLeft: 'none'
         }}
         ref={mobileMenuRef}
       >
         {/* Close button */}
-        <div>
-          <button
-            className="mobile-menu-close"
-            onClick={toggleMobileMenu}
-            aria-label="Close menu"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
+        <button
+          onClick={toggleMobileMenu}
+          className="mobile-menu-close absolute top-4 right-4 text-white hover:text-gray-200 focus:outline-none"
+          aria-label="Close menu"
+          style={{
+            background: 'transparent',
+            borderRadius: '50%',
+            width: '36px',
+            height: '36px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          <X size={24} />
+        </button>
         
         {/* Mobile menu content */}
-        <div className="px-2 pt-2 pb-3 space-y-1">
-          {filteredMenu.map((item) => (
+        <div className="px-2 pt-12 pb-3 space-y-1">
+          {filteredMenu.map((item, index) => (
             <div key={item.label} className="w-full">
               {item.children ? (
                 <div className="w-full">
                   <button
                     onClick={() => handleDropdownToggle(item.label)}
-                    className={`w-full flex items-center justify-between px-3 py-3 rounded-md text-base font-medium text-white hover:bg-blue-700 focus:outline-none ${openDropdown === item.label ? 'bg-blue-700' : ''}`}
+                    className={`w-full flex items-center justify-between px-3 py-3 text-base font-medium text-white hover:text-blue-200 focus:outline-none ${openDropdown === item.label ? 'text-blue-300' : ''}`}
                     aria-expanded={openDropdown === item.label}
                     aria-controls={`dropdown-${item.label}`}
                     aria-haspopup="true"
+                    style={{
+                      padding: '12px 24px',
+                      fontSize: '1.05rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      color: 'white',
+                      border: 'none',
+                      transition: 'all 0.2s ease',
+                      marginBottom: '4px',
+                      fontWeight: '500',
+                      textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)',
+                      backgroundColor: 'transparent',
+                      backdropFilter: 'none',
+                      WebkitBackdropFilter: 'none',
+                      opacity: isOpen ? 1 : 0,
+                      transform: isOpen ? 'translateX(0)' : 'translateX(20px)',
+                      transitionDelay: `${0.1 + index * 0.05}s`,
+                      outline: 'none',
+                      boxShadow: 'none',
+                      borderRadius: '0'
+                    }}
                   >
                     <div className="flex items-center">
                       <span className="mr-3">
@@ -471,18 +496,9 @@ const Navigation = () => {
                       </span>
                       <span className="font-bold text-white">{item.label}</span>
                     </div>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
+                    <ChevronDown
                       className={`h-5 w-5 transform transition-transform duration-200 ${openDropdown === item.label ? 'rotate-180' : ''}`}
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
+                    />
                   </button>
                   
                   <div className={`mobile-dropdown ml-6 ${openDropdown === item.label ? 'open' : ''}`}>
@@ -490,8 +506,26 @@ const Navigation = () => {
                       <Link
                         key={child.label}
                         to={child.path}
-                        className="flex items-center pl-8 pr-3 py-3 text-base font-medium text-white hover:bg-blue-800"
+                        className="flex items-center pl-8 pr-3 py-3 text-base font-medium text-white hover:text-blue-200"
                         onClick={handleMobileLinkClick}
+                        style={{
+                          padding: '12px 24px 12px 48px',
+                          fontSize: '1rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          color: 'white',
+                          border: 'none',
+                          transition: 'all 0.2s ease',
+                          marginBottom: '4px',
+                          fontWeight: '500',
+                          textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)',
+                          backgroundColor: 'transparent',
+                          backdropFilter: 'none',
+                          WebkitBackdropFilter: 'none',
+                          outline: 'none',
+                          boxShadow: 'none',
+                          borderRadius: '0'
+                        }}
                       >
                         <span className="mr-3">
                           {React.cloneElement(child.icon, { style: svgStyle })}
@@ -508,8 +542,29 @@ const Navigation = () => {
                       handleMobileLinkClick();
                       item.action(e);
                     }}
-                    className={`w-full flex items-center px-3 py-3 rounded-md text-base font-medium 
-                      ${item.label === 'Logout' ? 'text-white bg-red-600 hover:bg-red-700' : 'text-white hover:bg-blue-700'}`}
+                    className={`w-full flex items-center px-3 py-3 text-base font-medium 
+                      ${item.label === 'Logout' ? 'text-red-400 hover:text-red-300' : 'text-white hover:text-blue-200'}`}
+                    style={{
+                      padding: '12px 24px',
+                      fontSize: '1.05rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      color: 'white',
+                      border: 'none',
+                      transition: 'all 0.2s ease',
+                      marginBottom: '4px',
+                      fontWeight: '500',
+                      textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)',
+                      backgroundColor: 'transparent',
+                      backdropFilter: 'none',
+                      WebkitBackdropFilter: 'none',
+                      opacity: isOpen ? 1 : 0,
+                      transform: isOpen ? 'translateX(0)' : 'translateX(20px)',
+                      transitionDelay: `${0.1 + index * 0.05}s`,
+                      outline: 'none',
+                      boxShadow: 'none',
+                      borderRadius: '0'
+                    }}
                   >
                     <span className="mr-3">
                       {React.cloneElement(item.icon, { style: svgStyle })}
@@ -519,8 +574,29 @@ const Navigation = () => {
                 ) : (
                   <Link
                     to={item.path}
-                    className="flex items-center px-3 py-3 rounded-md text-base font-medium text-white hover:bg-blue-700"
+                    className="flex items-center px-3 py-3 text-base font-medium text-white hover:text-blue-200"
                     onClick={handleMobileLinkClick}
+                    style={{
+                      padding: '12px 24px',
+                      fontSize: '1.05rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      color: 'white',
+                      border: 'none',
+                      transition: 'all 0.2s ease',
+                      marginBottom: '4px',
+                      fontWeight: '500',
+                      textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)',
+                      backgroundColor: 'transparent',
+                      backdropFilter: 'none',
+                      WebkitBackdropFilter: 'none',
+                      opacity: isOpen ? 1 : 0,
+                      transform: isOpen ? 'translateX(0)' : 'translateX(20px)',
+                      transitionDelay: `${0.1 + index * 0.05}s`,
+                      outline: 'none',
+                      boxShadow: 'none',
+                      borderRadius: '0'
+                    }}
                   >
                     <span className="mr-3">
                       {React.cloneElement(item.icon, { style: svgStyle })}
@@ -540,69 +616,79 @@ const Navigation = () => {
           className="fixed inset-0 bg-black bg-opacity-50 z-40"
           onClick={toggleMobileMenu}
           aria-hidden="true"
+          style={{
+            backdropFilter: 'blur(1px)',
+            WebkitBackdropFilter: 'blur(1px)',
+            transition: 'all 0.3s ease'
+          }}
         ></div>
       )}
       
-      {/* iOS/Safari specific fixes */}
+      {/* Add iPad/Mobile specific styles */}
       <style>{`
-        @supports (-webkit-touch-callout: none) {
-          /* iOS specific styles */
-          .mobile-menu-open {
+        /* iPad-specific navigation fixes with hamburger menu */
+        @media only screen and (min-width: 768px) and (max-width: 1112px) {
+          /* Hide desktop menu on iPad */
+          nav .hidden.md\\:flex {
+            display: none !important;
+          }
+          
+          /* Show mobile menu button on iPad */
+          nav .mobile-menu-btn {
+            display: flex !important;
+          }
+          
+          /* Create a semi-transparent overlay for the entire screen when menu is open */
+          body::before {
+            content: '';
             position: fixed;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            -webkit-overflow-scrolling: auto;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0);
+            backdrop-filter: blur(0px);
+            -webkit-backdrop-filter: blur(0px);
+            z-index: 40;
+            pointer-events: none;
+            transition: all 0.3s ease;
+          }
+          
+          /* When menu is open, darken the overlay and enable pointer events */
+          body.menu-open::before {
+            background: rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(1px);
+            -webkit-backdrop-filter: blur(1px);
+            pointer-events: auto;
           }
         }
         
-        /* iPad specific styles */
-        @media only screen and (min-device-width: 768px) and (max-device-width: 1024px) {
-          .mobile-menu-button {
-            -webkit-tap-highlight-color: transparent;
+        /* Media query for mobile devices */
+        @media (max-width: 767px) {
+          /* Hamburger menu button styling */
+          .mobile-menu-btn,
+          nav button[aria-label="Open menu"] {
+            background: none !important;
+            background-color: transparent !important;
+            border: none !important;
+            border-radius: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+            outline: none !important;
+            z-index: 60 !important;
+            position: relative !important;
           }
-        }
-
-        /* Mobile header background fixes */
-        .safe-area-top {
-          padding-top: env(safe-area-inset-top);
-          background-color: #3d7fef !important;
-          box-shadow: none !important;
-          border-bottom: none !important;
-        }
-
-        /* This makes all child elements of the header inherit the blue background */
-        .safe-area-top > * {
-          background-color: #3d7fef !important;
-        }
-
-        /* Fix for iOS status bar */
-        @supports (-webkit-touch-callout: none) {
-          /* iOS only */
-          .safe-area-top {
-            padding-top: env(safe-area-inset-top);
+          
+          /* Mobile menu hamburger icon */
+          .mobile-menu-btn svg,
+          nav button[aria-label="Open menu"] svg {
+            stroke-width: 3 !important;
+            width: 24px !important;
+            height: 24px !important;
+            box-shadow: none !important;
+            background: transparent !important;
           }
-        }
-
-        /* Remove any white dividers or borders in the header area */
-        .header-container hr,
-        .header-container .divider,
-        .nav-container::after,
-        .nav-container::before {
-          display: none !important;
-          border: none !important;
-          box-shadow: none !important;
-        }
-        
-        /* Ensure no border or line appears below the header */
-        .nav-container {
-          border-bottom: none !important;
-          box-shadow: none !important;
-        }
-        
-        /* Remove any borders from direct children */
-        .nav-container > div {
-          border-bottom: none !important;
         }
       `}</style>
     </nav>

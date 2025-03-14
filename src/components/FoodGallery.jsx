@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import dbService from '../firebase/dbService';
 import LoadingSpinner from './LoadingSpinner';
+import OpenAIService from '../services/openaiService';
 
 const FoodGallery = () => {
   const [foodItems, setFoodItems] = useState([]);
@@ -13,8 +14,13 @@ const FoodGallery = () => {
   const [editFormData, setEditFormData] = useState({});
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [isRescanningFood, setIsRescanningFood] = useState(false);
+  const [rescanFoodName, setRescanFoodName] = useState('');
+  const [isRescanLoading, setIsRescanLoading] = useState(false);
+  const [rescanError, setRescanError] = useState(null);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const openaiService = new OpenAIService();
 
   useEffect(() => {
     if (!user) {
@@ -131,6 +137,92 @@ const FoodGallery = () => {
     setIsEditing(true);
   };
 
+  // Handle rescan button click
+  const handleRescanClick = () => {
+    setRescanFoodName(selectedFood.foodName);
+    setIsRescanningFood(true);
+    setRescanError(null); // Clear any previous errors
+  };
+
+  // Handle rescan name change
+  const handleRescanNameChange = (e) => {
+    setRescanFoodName(e.target.value);
+  };
+
+  // Handle rescan submit
+  const handleRescanSubmit = async (e) => {
+    e.preventDefault();
+    if (!rescanFoodName.trim()) {
+      return;
+    }
+
+    setIsRescanLoading(true);
+    setRescanError(null);
+    try {
+      // Get the image path from the selected food
+      const imagePath = selectedFood.imagePath;
+      if (!imagePath) {
+        throw new Error('No image available for this food item');
+      }
+
+      // Call OpenAI API to reanalyze the image with the corrected food name
+      const result = await openaiService.analyzeImage(imagePath, rescanFoodName.trim());
+      
+      if (result.error) {
+        throw new Error('Failed to analyze image content');
+      }
+      
+      // Process the result
+      const processedResult = {
+        foodName: rescanFoodName.trim(),
+        calories: result.calories || 0,
+        healthScore: result.healthScore || 0,
+        protein: result.protein || 0,
+        carbs: result.carbs || 0,
+        fat: result.fat || 0,
+        fiber: result.fiber || 0,
+        sugars: result.sugars || 0,
+        analysisData: JSON.stringify({
+          protein: result.protein || 0,
+          carbs: result.carbs || 0,
+          fat: result.fat || 0,
+          fiber: result.fiber || 0,
+          sugars: result.sugars || 0,
+          benefits: result.benefits || 'No benefits information available',
+          concerns: result.concerns || 'No concerns information available',
+          nutritionSource: result.nutritionSource || 'Estimated by AI',
+          healthScoreReason: result.healthScoreReason || 'Based on overall nutritional value',
+          portionSize: result.portionSize || 'Standard serving',
+          standardServingSize: result.standardServingSize || 'Standard serving',
+          relativePortionSize: result.relativePortionSize || 1.0,
+          actualAmountDescription: result.actualAmountDescription || 'Standard serving size'
+        })
+      };
+
+      // Update the food entry in the database
+      await dbService.updateFoodEntry(selectedFood.id, processedResult);
+      
+      // Update the selected food with the new data
+      setSelectedFood(prev => ({...prev, ...processedResult}));
+      
+      // Close the rescan modal
+      setIsRescanningFood(false);
+      
+    } catch (error) {
+      console.error('Error rescanning food:', error);
+      setRescanError(`Failed to rescan food: ${error.message || 'Unknown error'}`);
+    } finally {
+      setIsRescanLoading(false);
+    }
+  };
+
+  // Handle cancel rescan
+  const handleCancelRescan = () => {
+    setIsRescanningFood(false);
+    setRescanFoodName('');
+    setRescanError(null);
+  };
+
   // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -219,17 +311,17 @@ const FoodGallery = () => {
   return (
     <div className="w-full bg-gradient-to-b from-gray-50 to-gray-100 min-h-screen py-6 sm:py-8">
       <div className="container mx-auto px-5 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 sm:mb-8 gap-4">
-          <div className="pl-1 sm:pl-0">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-800 pb-1 journal-title">
+        <div className="flex flex-col md:flex-row justify-between items-center md:items-center mb-6 sm:mb-8 gap-5">
+          <div className="pl-2 pr-3 mb-4 md:mb-0 text-center md:text-left w-full md:w-auto">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-800 pb-1 tracking-wide journal-title">
               My Food Journal
             </h1>
-            <p className="text-gray-500 text-xs sm:text-sm md:text-base mt-1 sm:mt-0.5 journal-subtitle">Track your meals and discover your nutrition patterns</p>
+            <p className="text-gray-500 text-xs sm:text-sm md:text-base mt-1 sm:mt-0.5 tracking-normal journal-subtitle">Track your meals and discover your nutrition patterns</p>
           </div>
           
           <button 
             onClick={handleAddPhoto}
-            className="ml-1 sm:ml-0 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white px-5 sm:px-5 py-2.5 sm:py-2.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+            className="mx-auto md:mx-0 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-full text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 w-full sm:w-3/4 md:w-auto max-w-xs"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
@@ -321,7 +413,7 @@ const FoodGallery = () => {
       </div>
 
       {/* Food Detail Modal - Updated with modern design and improved spacing */}
-      {selectedFood && !isEditing && (
+      {selectedFood && !isEditing && !isRescanningFood && (
         <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50">
           <div className="bg-white rounded-xl max-w-md w-full max-h-[90vh] flex flex-col overflow-hidden shadow-xl">
             {/* Image and header - non-scrollable */}
@@ -488,6 +580,15 @@ const FoodGallery = () => {
                 Back
               </button>
               <div className="flex space-x-2">
+                <button
+                  onClick={handleRescanClick}
+                  className="flex items-center px-3 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 transition-all duration-200 text-xs font-medium"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Rescan
+                </button>
                 <button
                   onClick={handleEditClick}
                   className="flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all duration-200 text-xs font-medium"
@@ -725,6 +826,97 @@ const FoodGallery = () => {
                   'Save Changes'
                 )}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Rescan Food Modal */}
+      {selectedFood && isRescanningFood && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-hidden shadow-xl flex flex-col">
+            {/* Header - non-scrollable */}
+            <div className="p-4 flex-shrink-0 border-b border-gray-200">
+              <div className="flex justify-between items-center">
+                <h2 className="text-lg sm:text-xl font-bold text-gray-900">Rescan Food Item</h2>
+                <button 
+                  onClick={handleCancelRescan}
+                  className="bg-gray-200 rounded-full p-1.5 hover:bg-gray-300"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+              
+            {/* Scrollable form area */}
+            <div className="p-4 overflow-y-auto flex-grow">
+              <div className="mb-4">
+                <p className="text-sm text-gray-600">
+                  If the AI incorrectly identified your food, you can edit the name and rescan to get accurate nutritional information.
+                </p>
+              </div>
+              
+              {rescanError && (
+                <div className="mb-4 bg-red-50 border-l-4 border-red-400 p-3 rounded">
+                  <div className="flex">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                    <p className="text-sm text-red-700">{rescanError}</p>
+                  </div>
+                </div>
+              )}
+              
+              <form onSubmit={handleRescanSubmit}>
+                <div className="mb-4">
+                  <label htmlFor="rescanFoodName" className="block text-sm font-medium text-gray-700 mb-1">
+                    Food Name
+                  </label>
+                  <input
+                    type="text"
+                    id="rescanFoodName"
+                    value={rescanFoodName}
+                    onChange={handleRescanNameChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    placeholder="Enter correct food name"
+                    required
+                  />
+                </div>
+                
+                <div className="flex justify-end space-x-2">
+                  <button
+                    type="button"
+                    onClick={handleCancelRescan}
+                    className="px-3 py-1.5 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors duration-200 text-sm"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 flex items-center text-sm"
+                    disabled={isRescanLoading}
+                  >
+                    {isRescanLoading ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Rescanning...
+                      </>
+                    ) : (
+                      <>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Rescan with Correct Name
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>

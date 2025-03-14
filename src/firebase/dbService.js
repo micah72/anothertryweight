@@ -212,6 +212,18 @@ const dbService = {
         throw new Error('No user ID provided');
       }
       
+      // Directly access the user document by ID instead of querying
+      const userDocRef = doc(db, 'users', userId);
+      const userDoc = await getDoc(userDocRef);
+      
+      if (userDoc.exists()) {
+        return {
+          id: userDoc.id,
+          ...userDoc.data()
+        };
+      }
+      
+      // If nothing found, try fallback query
       const q = query(collection(db, 'users'), where('userId', '==', userId));
       const querySnapshot = await getDocs(q);
       
@@ -222,6 +234,7 @@ const dbService = {
         };
       }
       
+      console.log('No user profile found for ID:', userId);
       return null;
     } catch (error) {
       console.error('Error getting user profile:', error);
@@ -236,12 +249,23 @@ const dbService = {
         throw new Error('No user ID provided');
       }
       
-      const docRef = await addDoc(collection(db, 'goals'), {
+      // Ensure all required fields are present and properly formatted
+      const sanitizedData = {
         userId,
-        ...goalData,
+        type: goalData.type || 'weight',
+        current_value: parseFloat(goalData.current_value) || 0,
+        target_value: parseFloat(goalData.target_value) || 0,
+        deadline: goalData.deadline || new Date().toISOString().split('T')[0],
+        // Store reason data
+        reason: goalData.reason || '',
+        reasonDetail: goalData.reasonDetail || '',
         created_at: serverTimestamp(),
         updated_at: serverTimestamp()
-      });
+      };
+      
+      console.log('Adding goal with data:', sanitizedData);
+      
+      const docRef = await addDoc(collection(db, 'goals'), sanitizedData);
       return docRef.id;
     } catch (error) {
       console.error('Error adding goal:', error);
@@ -255,17 +279,39 @@ const dbService = {
         throw new Error('No user ID provided');
       }
       
+      // Modified query to work without compound index
       const q = query(
         collection(db, 'goals'),
-        where('userId', '==', userId),
-        orderBy('created_at', 'desc')
+        where('userId', '==', userId)
+        // Removed orderBy clause temporarily
       );
       
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      // Sort the results in memory instead
+      const goals = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          // Ensure dates are properly formatted for display
+          deadline: data.deadline || '',
+          created_at: data.created_at,
+          updated_at: data.updated_at
+        };
+      });
+      
+      console.log('Raw goals data:', goals);
+      
+      // Sort in memory by created_at in descending order
+      const sortedGoals = goals.sort((a, b) => {
+        // Try to convert to date if it's a Firestore timestamp or string
+        const dateA = a.created_at?.toDate?.() || new Date(a.created_at || 0);
+        const dateB = b.created_at?.toDate?.() || new Date(b.created_at || 0);
+        return dateB - dateA; // Descending order
+      });
+      
+      console.log('Sorted goals data:', sortedGoals);
+      return sortedGoals;
     } catch (error) {
       console.error('Error getting goals:', error);
       throw error;
@@ -284,10 +330,11 @@ const dbService = {
         return () => {};
       }
       
+      // Modified query to work without compound index
       const q = query(
         collection(db, 'goals'),
-        where('userId', '==', userId),
-        orderBy('created_at', 'desc')
+        where('userId', '==', userId)
+        // Removed orderBy clause temporarily
       );
 
       const unsubscribe = onSnapshot(q, 
@@ -295,8 +342,28 @@ const dbService = {
           try {
             const goals = [];
             snapshot.forEach((doc) => {
-              goals.push({ id: doc.id, ...doc.data() });
+              const data = doc.data();
+              goals.push({
+                id: doc.id,
+                ...data,
+                // Ensure dates are properly formatted for display
+                deadline: data.deadline || '',
+                created_at: data.created_at,
+                updated_at: data.updated_at
+              });
             });
+            
+            console.log('Raw subscription goals data:', goals);
+            
+            // Sort in memory by created_at in descending order
+            goals.sort((a, b) => {
+              // Try to convert to date if it's a Firestore timestamp or string
+              const dateA = a.created_at?.toDate?.() || new Date(a.created_at || 0);
+              const dateB = b.created_at?.toDate?.() || new Date(b.created_at || 0);
+              return dateB - dateA; // Descending order
+            });
+            
+            console.log('Sorted subscription goals data:', goals);
             callback(goals);
           } catch (error) {
             console.error('Error processing goals snapshot data:', error);

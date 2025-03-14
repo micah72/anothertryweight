@@ -27,6 +27,16 @@ const MealPlanner = () => {
   const { user } = useAuth();
   const openaiService = new OpenAIService();
   
+  // Helper function to format date in a more user-friendly way
+  const formatDisplayDate = (date) => {
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'long', 
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+  
   const [newMeal, setNewMeal] = useState({
     id: null,
     name: '',
@@ -503,551 +513,602 @@ const MealPlanner = () => {
   // We no longer auto-generate suggestions when loading the page
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <h2 className="text-2xl font-bold mb-6">Meal Planner</h2>
+    <div className="w-full bg-gradient-to-b from-gray-50 to-gray-100 min-h-screen py-6 sm:py-8">
+      <div className="container max-w-4xl mx-auto px-5 sm:px-6 lg:px-8">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-800 pb-1 pl-1 sm:pl-0 mb-6">Meal Planner</h2>
 
-      {/* Date Selection and AI Controls */}
-      <div className="card-base mb-6">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-          <div className="flex items-center space-x-2">
-            <input
-              type="date"
-              value={selectedDate.toISOString().split('T')[0]}
-              onChange={(e) => setSelectedDate(new Date(e.target.value))}
-              className="input-base"
-            />
-            <select 
-              className="input-base"
-              onChange={(e) => {
-                if (e.target.value === 'today') {
-                  setSelectedDate(new Date());
-                } else if (e.target.value === 'tomorrow') {
-                  const tomorrow = new Date();
-                  tomorrow.setDate(tomorrow.getDate() + 1);
-                  setSelectedDate(tomorrow);
-                }
-              }}
-            >
-              <option value="">Quick Select</option>
-              <option value="today">Today</option>
-              <option value="tomorrow">Tomorrow</option>
-            </select>
+        {/* Date Selection and AI Controls */}
+        <div className="bg-white rounded-xl shadow-md p-4 sm:p-6 mb-6">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <div className="relative w-full sm:w-auto">
+                <div className="bg-white rounded-lg border border-gray-300 flex items-center pr-3 hover:border-blue-500 transition-colors">
+                  <div className="pl-3 py-2.5 flex items-center text-gray-700">
+                    <Calendar className="h-5 w-5 text-blue-500 mr-2" />
+                    <span className="text-sm font-medium mr-2">{formatDisplayDate(selectedDate)}</span>
+                  </div>
+                  <input
+                    type="date"
+                    value={selectedDate.toISOString().split('T')[0]}
+                    onChange={(e) => setSelectedDate(new Date(e.target.value))}
+                    className="sr-only"
+                    aria-label="Select date"
+                  />
+                  <button 
+                    onClick={() => document.querySelector('input[type="date"]').showPicker()}
+                    className="text-gray-400 hover:text-blue-500 focus:outline-none"
+                    aria-label="Open date picker"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <select 
+                className="pl-4 pr-8 py-2.5 block w-full sm:w-auto border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white"
+                onChange={(e) => {
+                  if (e.target.value === 'today') {
+                    setSelectedDate(new Date());
+                  } else if (e.target.value === 'tomorrow') {
+                    const tomorrow = new Date();
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    setSelectedDate(tomorrow);
+                  }
+                }}
+              >
+                <option value="">Quick Select</option>
+                <option value="today">Today</option>
+                <option value="tomorrow">Tomorrow</option>
+              </select>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                onClick={handleRefreshSuggestions}
+                className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2.5 px-4 rounded-lg flex items-center text-sm shadow-sm transition-all duration-200"
+                disabled={generatingAiSuggestions || refrigeratorItems.length === 0}
+              >
+                {generatingAiSuggestions ? (
+                  <>
+                    <LoadingSpinner size="sm" />
+                    <span className="ml-1.5">Generating...</span>
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-1.5" />
+                    Refresh AI Suggestions
+                  </>
+                )}
+              </button>
+              <button
+                onClick={() => setShowIngredientSuggestion(true)}
+                className="bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 px-4 rounded-lg flex items-center text-sm shadow-sm transition-all duration-200"
+                disabled={generatingAiSuggestions}
+              >
+                <Utensils className="w-4 h-4 mr-1.5" />
+                Suggest Ingredients
+              </button>
+              <button
+                onClick={() => {
+                  setNewMeal({
+                    id: null,
+                    name: '',
+                    time: '12:00',
+                    calories: '',
+                    notes: '',
+                    ingredients: [],
+                    recipe: ''
+                  });
+                  setIsEditMode(false);
+                  setShowAddMeal(true);
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg flex items-center text-sm shadow-sm transition-all duration-200"
+              >
+                <Plus className="w-4 h-4 mr-1.5" />
+                Add Meal
+              </button>
+            </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={handleRefreshSuggestions}
-              className="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded flex items-center text-sm"
-              disabled={generatingAiSuggestions || refrigeratorItems.length === 0}
-            >
-              {generatingAiSuggestions ? (
-                <>
-                  <LoadingSpinner size="sm" />
-                  <span className="ml-1">Generating...</span>
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="w-4 h-4 mr-1" />
-                  Refresh AI Suggestions
-                </>
-              )}
-            </button>
-            <button
-              onClick={() => setShowIngredientSuggestion(true)}
-              className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-3 rounded flex items-center text-sm"
-              disabled={generatingAiSuggestions || refrigeratorItems.length === 0}
-            >
-              <Utensils className="w-4 h-4 mr-1" />
-              Suggest Ingredients
-            </button>
-            <button
-              onClick={() => setShowAddMeal(true)}
-              className="button-base flex items-center"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Meal
-            </button>
-          </div>
+        
+          {refrigeratorItems.length === 0 && (
+            <div className="mt-4 p-4 border-l-4 border-yellow-400 bg-yellow-50 rounded-md">
+              <p className="text-sm text-yellow-700">
+                No refrigerator items found. For AI meal suggestions based on your available ingredients, 
+                please add items to your refrigerator by using the Refrigerator Analysis feature.
+              </p>
+            </div>
+          )}
+          
+          {(aiError || loadError) && (
+            <div className="mt-4 p-3 border-l-4 border-red-500 bg-red-50 rounded-md">
+              <p className="text-sm text-red-700">{aiError || loadError}</p>
+            </div>
+          )}
         </div>
-        
-        {refrigeratorItems.length === 0 && (
-          <div className="mt-3 p-3 border border-yellow-300 bg-yellow-50 rounded-md">
-            <p className="text-sm text-yellow-700">
-              No refrigerator items found. For AI meal suggestions based on your available ingredients, 
-              please add items to your refrigerator by using the Refrigerator Analysis feature.
-            </p>
-          </div>
-        )}
-        
-        {(aiError || loadError) && (
-          <div className="mt-3 p-3 border-l-4 border-red-500 bg-red-50 rounded-md">
-            <p className="text-sm text-red-700">{aiError || loadError}</p>
-          </div>
-        )}
-      </div>
 
-      {/* Date Tabs */}
-      <div className="flex mb-4">
-        <button
-          className={`py-2 px-4 font-medium ${selectedDate.toISOString().split('T')[0] === new Date().toISOString().split('T')[0] ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-          onClick={() => {
-            const today = new Date();
-            setSelectedDate(today);
-          }}
-        >
-          Today
-        </button>
-        <button
-          className={`py-2 px-4 font-medium ${selectedDate.toISOString().split('T')[0] === tomorrowDate.toISOString().split('T')[0] ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-          onClick={() => {
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            setSelectedDate(tomorrow);
-          }}
-        >
-          Tomorrow
-        </button>
-      </div>
-      
-      {/* Meal List */}
-      {loading ? (
-        <div className="text-center py-8">
-          <LoadingSpinner />
-          <p className="mt-2 text-gray-600">Loading meals...</p>
+        {/* Standalone Today/Tomorrow Tabs - Main navigation for date selection */}
+        <div className="flex mb-6 bg-white rounded-lg shadow-sm overflow-hidden">
+          <button
+            className={`py-3.5 px-5 font-medium text-sm flex-1 transition-all duration-200 
+              ${selectedDate.toISOString().split('T')[0] === new Date().toISOString().split('T')[0] 
+                ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50' 
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+            onClick={() => {
+              const today = new Date();
+              setSelectedDate(today);
+            }}
+          >
+            Today
+          </button>
+          <button
+            className={`py-3.5 px-5 font-medium text-sm flex-1 transition-all duration-200 
+              ${selectedDate.toISOString().split('T')[0] === tomorrowDate.toISOString().split('T')[0] 
+                ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50' 
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+            onClick={() => {
+              const tomorrow = new Date();
+              tomorrow.setDate(tomorrow.getDate() + 1);
+              setSelectedDate(tomorrow);
+            }}
+          >
+            Tomorrow
+          </button>
         </div>
-      ) : generatingAiSuggestions ? (
-        <div className="text-center py-8">
-          <LoadingSpinner />
-          <p className="mt-2 text-gray-600">Generating AI meal suggestions...</p>
-          <p className="text-sm text-gray-500 mt-1">This may take a moment as we craft personalized meals based on your refrigerator contents.</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {mealTypes.map((mealType) => {
-            const mealForType = meals.find(m => m.name === mealType);
-            const dateKey = selectedDate.toISOString().split('T')[0];
-            const aiSuggestion = aiSuggestions[dateKey]?.[mealType];
-            
-            return (
-              <div key={mealType} className="card-base">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-lg font-semibold">{mealType}</h3>
-                  {mealForType && (
-                    <div className="flex items-center text-sm text-gray-500">
-                      <Clock className="w-4 h-4 mr-1" />
-                      {mealForType.time}
+
+        {/* Meal List Section */}
+        {loading ? (
+          <div className="text-center py-12 bg-white rounded-xl shadow-md">
+            <LoadingSpinner />
+            <p className="mt-3 text-gray-600">Loading meals...</p>
+          </div>
+        ) : generatingAiSuggestions ? (
+          <div className="text-center py-12 bg-white rounded-xl shadow-md">
+            <LoadingSpinner />
+            <p className="mt-3 text-gray-600">Generating AI meal suggestions...</p>
+            <p className="text-sm text-gray-500 mt-2 max-w-md mx-auto">This may take a moment as we craft personalized meals based on your refrigerator contents.</p>
+          </div>
+        ) : (
+          <div className="space-y-5">
+            {mealTypes.map((mealType) => {
+              const mealForType = meals.find(m => m.name === mealType);
+              const dateKey = selectedDate.toISOString().split('T')[0];
+              const aiSuggestion = aiSuggestions[dateKey]?.[mealType];
+              
+              return (
+                <div key={mealType} className="bg-white rounded-xl shadow-md p-5 transition-all duration-200 hover:shadow-lg">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-lg font-semibold text-gray-800">{mealType}</h3>
+                    {mealForType && (
+                      <div className="flex items-center text-sm text-gray-500">
+                        <Clock className="w-4 h-4 mr-1.5" />
+                        {mealForType.time}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {mealForType ? (
+                    <div>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="text-sm mb-2">{mealForType.notes}</p>
+                          <p className="text-sm text-gray-500 flex items-center">
+                            <span className="inline-block px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
+                              {mealForType.calories} calories
+                            </span>
+                          </p>
+                        </div>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => viewMeal(mealForType)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium py-1.5 px-2.5 rounded-md flex items-center transition-colors duration-200"
+                            title="View details"
+                          >
+                            <Eye className="w-3.5 h-3.5 mr-1" />
+                            <span>View</span>
+                          </button>
+                          <button
+                            onClick={() => editMeal(mealForType)}
+                            className="bg-yellow-500 hover:bg-yellow-600 text-white text-xs font-medium py-1.5 px-2.5 rounded-md flex items-center transition-colors duration-200"
+                            title="Edit meal"
+                          >
+                            <Edit className="w-3.5 h-3.5 mr-1" />
+                            <span>Edit</span>
+                          </button>
+                          <button
+                            onClick={() => deleteMeal(mealForType.id)}
+                            className="bg-red-500 hover:bg-red-600 text-white text-xs font-medium py-1.5 px-2.5 rounded-md flex items-center transition-colors duration-200"
+                            title="Delete meal"
+                          >
+                            <Trash className="w-3.5 h-3.5 mr-1" />
+                            <span>Delete</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : aiSuggestion ? (
+                    <div className="border-l-4 border-purple-400 pl-3 py-2 bg-purple-50 rounded-r-lg">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <p className="font-medium text-sm text-gray-800">{aiSuggestion.name}</p>
+                          <p className="text-xs text-gray-600 mb-2">{aiSuggestion.description}</p>
+                          <div className="flex space-x-3">
+                            <span className="inline-block px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
+                              {aiSuggestion.calories} cal
+                            </span>
+                            <span className="inline-block px-2.5 py-1 bg-green-50 text-green-700 rounded-full text-xs font-medium">
+                              {aiSuggestion.protein}g protein
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => applySuggestedMeal(aiSuggestion, mealType)}
+                            className="bg-green-600 hover:bg-green-700 text-white text-xs font-medium py-1.5 px-2.5 rounded-md flex items-center transition-colors duration-200"
+                          >
+                            <Edit className="w-3.5 h-3.5 mr-1" />
+                            View & Edit
+                          </button>
+                          <button
+                            onClick={() => generateAIMealSuggestion(mealType)}
+                            className="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs py-1.5 px-2.5 rounded-md flex items-center transition-colors duration-200"
+                            disabled={aiLoading}
+                          >
+                            {aiLoading && mealType === newMeal.name ? (
+                              <span className="flex items-center justify-center">
+                                <LoadingSpinner size="xs" />
+                              </span>
+                            ) : (
+                              <RefreshCw className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex space-x-3 mt-2">
+                      <button
+                        onClick={() => {
+                          setNewMeal(prev => ({ ...prev, name: mealType }));
+                          setShowAddMeal(true);
+                        }}
+                        className="text-blue-600 hover:text-blue-800 text-sm hover:underline flex items-center transition-colors duration-200"
+                      >
+                        <Plus className="w-4 h-4 mr-1" />
+                        Plan this meal
+                      </button>
+                      <button
+                        onClick={() => generateAIMealSuggestion(mealType)}
+                        className="text-purple-600 hover:text-purple-800 text-sm hover:underline flex items-center transition-colors duration-200"
+                        disabled={aiLoading}
+                      >
+                        {aiLoading && mealType === newMeal.name ? (
+                          <span className="flex items-center justify-center">
+                            <LoadingSpinner size="sm" />
+                          </span>
+                        ) : (
+                          <>
+                            <Sparkles className="w-4 h-4 mr-1" />
+                            Generate AI suggestion
+                          </>
+                        )}
+                      </button>
                     </div>
                   )}
                 </div>
-                
-                {mealForType ? (
-                  <div>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="text-sm mb-1">{mealForType.notes}</p>
-                        <p className="text-sm text-gray-500">{mealForType.calories} calories</p>
-                      </div>
-                      <div className="flex space-x-1">
-                        <button
-                          onClick={() => viewMeal(mealForType)}
-                          className="bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium py-1 px-2 rounded"
-                          title="View details"
-                        >
-                          <Eye className="w-3 h-3" />
-                        </button>
-                        <button
-                          onClick={() => editMeal(mealForType)}
-                          className="bg-yellow-500 hover:bg-yellow-600 text-white text-xs font-medium py-1 px-2 rounded"
-                          title="Edit meal"
-                        >
-                          <Edit className="w-3 h-3" />
-                        </button>
-                        <button
-                          onClick={() => deleteMeal(mealForType.id)}
-                          className="bg-red-500 hover:bg-red-600 text-white text-xs font-medium py-1 px-2 rounded"
-                          title="Delete meal"
-                        >
-                          <Trash className="w-3 h-3" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ) : aiSuggestion ? (
-                  <div className="border-l-4 border-purple-300 pl-3 py-1">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <p className="font-medium text-sm">{aiSuggestion.name}</p>
-                        <p className="text-xs text-gray-600 mb-1">{aiSuggestion.description}</p>
-                        <div className="flex space-x-3 text-xs text-gray-500">
-                          <span>{aiSuggestion.calories} cal</span>
-                          <span>{aiSuggestion.protein}g protein</span>
-                        </div>
-                      </div>
-                      <div className="flex space-x-1">
-                        <button
-                          onClick={() => applySuggestedMeal(aiSuggestion, mealType)}
-                          className="bg-green-500 hover:bg-green-600 text-white text-xs font-medium py-1 px-2 rounded"
-                        >
-                          View & Edit
-                        </button>
-                        <button
-                          onClick={() => generateAIMealSuggestion(mealType)}
-                          className="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs py-1 px-2 rounded"
-                          disabled={aiLoading}
-                        >
-                          {aiLoading && mealType === newMeal.name ? (
-                            <span className="flex items-center justify-center">
-                              <LoadingSpinner size="xs" />
-                            </span>
-                          ) : (
-                            <RefreshCw className="w-3 h-3" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => {
-                        setNewMeal(prev => ({ ...prev, name: mealType }));
-                        setShowAddMeal(true);
-                      }}
-                      className="text-primary text-sm hover:underline"
-                    >
-                      + Plan this meal
-                    </button>
-                    <button
-                      onClick={() => generateAIMealSuggestion(mealType)}
-                      className="text-purple-600 text-sm hover:underline flex items-center"
-                      disabled={aiLoading}
-                    >
-                      {aiLoading && mealType === newMeal.name ? (
-                        <span className="flex items-center justify-center">
-                          <LoadingSpinner size="sm" />
-                        </span>
-                      ) : (
-                        <>
-                          <Sparkles className="w-3 h-3 mr-1" />
-                          AI Suggest
-                        </>
-                      )}
-                    </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Add Meal Modal */}
+        {showAddMeal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-semibold">{isEditMode ? 'Edit Meal' : 'Add Meal'}</h3>
+                <button onClick={() => {
+                  setShowAddMeal(false);
+                  setIsEditMode(false);
+                  setNewMeal({
+                    id: null,
+                    name: '',
+                    time: '12:00',
+                    calories: '',
+                    notes: '',
+                    ingredients: [],
+                    recipe: ''
+                  });
+                }}>
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {aiError && (
+                  <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
+                    <p className="text-red-700">{aiError}</p>
                   </div>
                 )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Add Meal Modal */}
-      {showAddMeal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold">{isEditMode ? 'Edit Meal' : 'Add Meal'}</h3>
-              <button onClick={() => {
-                setShowAddMeal(false);
-                setIsEditMode(false);
-                setNewMeal({
-                  id: null,
-                  name: '',
-                  time: '12:00',
-                  calories: '',
-                  notes: '',
-                  ingredients: [],
-                  recipe: ''
-                });
-              }}>
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {aiError && (
-                <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
-                  <p className="text-red-700">{aiError}</p>
-                </div>
-              )}
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Meal Type</label>
-                <select
-                  value={newMeal.name}
-                  onChange={(e) => setNewMeal(prev => ({ ...prev, name: e.target.value }))}
-                  className="input-base"
-                >
-                  <option value="">Select meal type</option>
-                  {mealTypes.map(type => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Time</label>
-                <input
-                  type="time"
-                  value={newMeal.time}
-                  onChange={(e) => setNewMeal(prev => ({ ...prev, time: e.target.value }))}
-                  className="input-base"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Estimated Calories</label>
-                <input
-                  type="number"
-                  value={newMeal.calories}
-                  onChange={(e) => setNewMeal(prev => ({ ...prev, calories: e.target.value }))}
-                  className="input-base"
-                  placeholder="Enter calories"
-                />
-              </div>
-              
-              {/* AI-generated ingredients */}
-              {newMeal.ingredients && newMeal.ingredients.length > 0 && (
+                
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Ingredients</label>
-                  <div className="bg-gray-50 p-3 rounded-md">
+                  <label className="block text-sm font-medium text-gray-700">Meal Type</label>
+                  <select
+                    value={newMeal.name}
+                    onChange={(e) => setNewMeal(prev => ({ ...prev, name: e.target.value }))}
+                    className="input-base"
+                  >
+                    <option value="">Select meal type</option>
+                    {mealTypes.map(type => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Time</label>
+                  <input
+                    type="time"
+                    value={newMeal.time}
+                    onChange={(e) => setNewMeal(prev => ({ ...prev, time: e.target.value }))}
+                    className="input-base"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Estimated Calories</label>
+                  <input
+                    type="number"
+                    value={newMeal.calories}
+                    onChange={(e) => setNewMeal(prev => ({ ...prev, calories: e.target.value }))}
+                    className="input-base"
+                    placeholder="Enter calories"
+                  />
+                </div>
+                
+                {/* AI-generated ingredients */}
+                {newMeal.ingredients && newMeal.ingredients.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Ingredients</label>
+                    <div className="bg-gray-50 p-3 rounded-md">
+                      <ul className="list-disc pl-5 space-y-1">
+                        {newMeal.ingredients.map((ingredient, index) => (
+                          <li key={index} className="text-sm">{ingredient}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                )}
+                
+                {/* AI-generated recipe */}
+                {newMeal.recipe && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Recipe</label>
+                    <div className="bg-gray-50 p-3 rounded-md">
+                      <p className="text-sm whitespace-pre-line">{newMeal.recipe}</p>
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Notes</label>
+                  <textarea
+                    value={newMeal.notes}
+                    onChange={(e) => setNewMeal(prev => ({ ...prev, notes: e.target.value }))}
+                    className="input-base"
+                    rows="3"
+                    placeholder="Add meal notes..."
+                  />
+                </div>
+                
+                <div className="flex space-x-3">
+                  <button
+                    onClick={saveMeal}
+                    disabled={loading}
+                    className="button-base w-full"
+                  >
+                    {loading ? <span className="flex items-center justify-center"><LoadingSpinner /></span> : isEditMode ? 'Update Meal' : 'Save Meal'}
+                  </button>
+                  
+                  {newMeal.name && (
+                    <button
+                      onClick={() => generateAIMealSuggestion(newMeal.name)}
+                      disabled={aiLoading}
+                      className="button-base-secondary flex items-center justify-center"
+                      title="Regenerate AI suggestion"
+                    >
+                      {aiLoading ? <LoadingSpinner /> : <RefreshCw className="w-5 h-5" />}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* View Meal Details Modal */}
+        {viewMealDetails && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-semibold">{viewMealDetails.name}</h3>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => {
+                      editMeal(viewMealDetails);
+                      setViewMealDetails(null);
+                    }}
+                    className="bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-medium py-1 px-3 rounded flex items-center"
+                  >
+                    <Edit className="w-4 h-4 mr-1" />
+                    Edit
+                  </button>
+                  <button onClick={() => setViewMealDetails(null)}>
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex items-center text-gray-500 mb-2">
+                  <Clock className="w-4 h-4 mr-2" />
+                  <span>{viewMealDetails.time}</span>
+                  <span className="mx-3">•</span>
+                  <span>{viewMealDetails.calories} calories</span>
+                </div>
+                
+                <div>
+                  <h4 className="font-medium mb-1">Description</h4>
+                  <p className="text-gray-700">{viewMealDetails.notes}</p>
+                </div>
+                
+                {viewMealDetails.ingredients && viewMealDetails.ingredients.length > 0 && (
+                  <div>
+                    <h4 className="font-medium mb-1">Ingredients</h4>
                     <ul className="list-disc pl-5 space-y-1">
-                      {newMeal.ingredients.map((ingredient, index) => (
+                      {viewMealDetails.ingredients.map((ingredient, index) => (
                         <li key={index} className="text-sm">{ingredient}</li>
                       ))}
                     </ul>
                   </div>
-                </div>
-              )}
-              
-              {/* AI-generated recipe */}
-              {newMeal.recipe && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Recipe</label>
-                  <div className="bg-gray-50 p-3 rounded-md">
-                    <p className="text-sm whitespace-pre-line">{newMeal.recipe}</p>
-                  </div>
-                </div>
-              )}
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Notes</label>
-                <textarea
-                  value={newMeal.notes}
-                  onChange={(e) => setNewMeal(prev => ({ ...prev, notes: e.target.value }))}
-                  className="input-base"
-                  rows="3"
-                  placeholder="Add meal notes..."
-                />
-              </div>
-              
-              <div className="flex space-x-3">
-                <button
-                  onClick={saveMeal}
-                  disabled={loading}
-                  className="button-base w-full"
-                >
-                  {loading ? <span className="flex items-center justify-center"><LoadingSpinner /></span> : isEditMode ? 'Update Meal' : 'Save Meal'}
-                </button>
-                
-                {newMeal.name && (
-                  <button
-                    onClick={() => generateAIMealSuggestion(newMeal.name)}
-                    disabled={aiLoading}
-                    className="button-base-secondary flex items-center justify-center"
-                    title="Regenerate AI suggestion"
-                  >
-                    {aiLoading ? <LoadingSpinner /> : <RefreshCw className="w-5 h-5" />}
-                  </button>
                 )}
+                
+                {viewMealDetails.recipe && (
+                  <div>
+                    <h4 className="font-medium mb-1">Recipe</h4>
+                    <p className="text-sm whitespace-pre-line">{viewMealDetails.recipe}</p>
+                  </div>
+                )}
+                
+                <div className="flex justify-end pt-4">
+                  <button
+                    onClick={() => setViewMealDetails(null)}
+                    className="button-base-secondary"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
-      
-      {/* View Meal Details Modal */}
-      {viewMealDetails && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold">{viewMealDetails.name}</h3>
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => {
-                    editMeal(viewMealDetails);
-                    setViewMealDetails(null);
-                  }}
-                  className="bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-medium py-1 px-3 rounded flex items-center"
-                >
-                  <Edit className="w-4 h-4 mr-1" />
-                  Edit
-                </button>
-                <button onClick={() => setViewMealDetails(null)}>
+        )}
+        
+        {/* Ingredient Suggestion Modal */}
+        {showIngredientSuggestion && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-semibold">Suggest Ingredients for a Meal</h3>
+                <button onClick={() => {
+                  setShowIngredientSuggestion(false);
+                  setSuggestedIngredients([]);
+                  setIngredientInput('');
+                  setSelectedMealTypeForIngredients('');
+                }}>
                   <X className="w-6 h-6" />
                 </button>
               </div>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="flex items-center text-gray-500 mb-2">
-                <Clock className="w-4 h-4 mr-2" />
-                <span>{viewMealDetails.time}</span>
-                <span className="mx-3">•</span>
-                <span>{viewMealDetails.calories} calories</span>
-              </div>
               
-              <div>
-                <h4 className="font-medium mb-1">Description</h4>
-                <p className="text-gray-700">{viewMealDetails.notes}</p>
-              </div>
-              
-              {viewMealDetails.ingredients && viewMealDetails.ingredients.length > 0 && (
+              <div className="space-y-4">
                 <div>
-                  <h4 className="font-medium mb-1">Ingredients</h4>
-                  <ul className="list-disc pl-5 space-y-1">
-                    {viewMealDetails.ingredients.map((ingredient, index) => (
-                      <li key={index} className="text-sm">{ingredient}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              
-              {viewMealDetails.recipe && (
-                <div>
-                  <h4 className="font-medium mb-1">Recipe</h4>
-                  <p className="text-sm whitespace-pre-line">{viewMealDetails.recipe}</p>
-                </div>
-              )}
-              
-              <div className="flex justify-end pt-4">
-                <button
-                  onClick={() => setViewMealDetails(null)}
-                  className="button-base-secondary"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Ingredient Suggestion Modal */}
-      {showIngredientSuggestion && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold">Suggest Ingredients for a Meal</h3>
-              <button onClick={() => {
-                setShowIngredientSuggestion(false);
-                setSuggestedIngredients([]);
-                setIngredientInput('');
-                setSelectedMealTypeForIngredients('');
-              }}>
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Select Meal Type</label>
-                <select
-                  value={selectedMealTypeForIngredients}
-                  onChange={(e) => setSelectedMealTypeForIngredients(e.target.value)}
-                  className="input-base w-full"
-                >
-                  <option value="">Select a meal type</option>
-                  {mealTypes.map((type) => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Add Ingredients You'd Like to Use</label>
-                <div className="flex">
-                  <input
-                    type="text"
-                    value={ingredientInput}
-                    onChange={(e) => setIngredientInput(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && addIngredientSuggestion()}
-                    className="input-base flex-grow"
-                    placeholder="Enter an ingredient..."
-                  />
-                  <button
-                    onClick={addIngredientSuggestion}
-                    className="button-base ml-2"
-                    disabled={!ingredientInput.trim()}
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Select Meal Type</label>
+                  <select
+                    value={selectedMealTypeForIngredients}
+                    onChange={(e) => setSelectedMealTypeForIngredients(e.target.value)}
+                    className="input-base w-full"
                   >
-                    <Plus className="w-4 h-4" />
+                    <option value="">Select a meal type</option>
+                    {mealTypes.map((type) => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Add Ingredients You'd Like to Use</label>
+                  <div className="flex">
+                    <input
+                      type="text"
+                      value={ingredientInput}
+                      onChange={(e) => setIngredientInput(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && addIngredientSuggestion()}
+                      className="input-base flex-grow"
+                      placeholder="Enter an ingredient..."
+                    />
+                    <button
+                      onClick={addIngredientSuggestion}
+                      className="button-base ml-2"
+                      disabled={!ingredientInput.trim()}
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                
+                {suggestedIngredients.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Suggested Ingredients:</label>
+                    <div className="flex flex-wrap gap-2">
+                      {suggestedIngredients.map((ingredient, index) => (
+                        <div key={index} className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full flex items-center">
+                          <Tag className="w-3 h-3 mr-1" />
+                          <span className="text-sm">{ingredient}</span>
+                          <button
+                            onClick={() => removeIngredientSuggestion(index)}
+                            className="ml-1 text-blue-600 hover:text-blue-800"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="bg-blue-50 border-l-4 border-blue-500 p-4 text-sm text-blue-700">
+                  <p>The AI will create a recipe using your suggested ingredients along with other items from your refrigerator.</p>
+                </div>
+                
+                {aiError && (
+                  <div className="bg-red-50 border-l-4 border-red-500 p-4">
+                    <p className="text-red-700">{aiError}</p>
+                  </div>
+                )}
+                
+                <div className="flex justify-end pt-4 space-x-3">
+                  <button
+                    onClick={() => {
+                      setShowIngredientSuggestion(false);
+                      setSuggestedIngredients([]);
+                      setIngredientInput('');
+                      setSelectedMealTypeForIngredients('');
+                    }}
+                    className="button-base-secondary"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={generateMealWithIngredients}
+                    disabled={aiLoading || suggestedIngredients.length === 0 || !selectedMealTypeForIngredients}
+                    className="button-base flex items-center justify-center"
+                  >
+                    {aiLoading ? (
+                      <span className="flex items-center">
+                        <LoadingSpinner size="sm" />
+                        <span className="ml-2">Generating...</span>
+                      </span>
+                    ) : (
+                      <>
+                        <Utensils className="w-4 h-4 mr-2" />
+                        Generate Recipe
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
-              
-              {suggestedIngredients.length > 0 && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Suggested Ingredients:</label>
-                  <div className="flex flex-wrap gap-2">
-                    {suggestedIngredients.map((ingredient, index) => (
-                      <div key={index} className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full flex items-center">
-                        <Tag className="w-3 h-3 mr-1" />
-                        <span className="text-sm">{ingredient}</span>
-                        <button
-                          onClick={() => removeIngredientSuggestion(index)}
-                          className="ml-1 text-blue-600 hover:text-blue-800"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              <div className="bg-blue-50 border-l-4 border-blue-500 p-4 text-sm text-blue-700">
-                <p>The AI will create a recipe using your suggested ingredients along with other items from your refrigerator.</p>
-              </div>
-              
-              {aiError && (
-                <div className="bg-red-50 border-l-4 border-red-500 p-4">
-                  <p className="text-red-700">{aiError}</p>
-                </div>
-              )}
-              
-              <div className="flex justify-end pt-4 space-x-3">
-                <button
-                  onClick={() => {
-                    setShowIngredientSuggestion(false);
-                    setSuggestedIngredients([]);
-                    setIngredientInput('');
-                    setSelectedMealTypeForIngredients('');
-                  }}
-                  className="button-base-secondary"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={generateMealWithIngredients}
-                  disabled={aiLoading || suggestedIngredients.length === 0 || !selectedMealTypeForIngredients}
-                  className="button-base flex items-center justify-center"
-                >
-                  {aiLoading ? (
-                    <span className="flex items-center">
-                      <LoadingSpinner size="sm" />
-                      <span className="ml-2">Generating...</span>
-                    </span>
-                  ) : (
-                    <>
-                      <Utensils className="w-4 h-4 mr-2" />
-                      Generate Recipe
-                    </>
-                  )}
-                </button>
-              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

@@ -467,9 +467,9 @@ nav button:hover svg path {
   
   /* Make the close button visible on white background */
   .md\\:hidden button[aria-label="Close menu"] {
-    background-color: #2563eb !important;
+    background-color: transparent !important;
     color: white !important;
-    border-radius: 4px !important;
+    border-radius: 0 !important;
   }
   
   /* Fix SVG colors in mobile menu buttons */
@@ -615,7 +615,7 @@ nav button:hover svg path {
   /* Keep correct styling for hamburger menu button */
   button[aria-label="Open menu"],
   button[aria-label="Close menu"] {
-    background-color: #2563eb !important;
+    background-color: transparent !important;
     color: white !important;
   }
   
@@ -628,7 +628,7 @@ nav button:hover svg path {
 
 /* Global critical overrides - these will take precedence over all other styles */
 .mobile-hamburger {
-  background-color: #2563eb !important;
+  background-color: transparent !important;
   color: white !important;
 }
 
@@ -636,6 +636,78 @@ nav button:hover svg path {
   color: white !important;
   stroke: white !important;
   fill: none !important;
+}
+
+/* Direct styling for the hamburger icon */
+.hamburger-icon {
+  stroke-width: 3 !important;
+  width: 24px !important;
+  height: 24px !important;
+  box-shadow: none !important;
+  filter: none !important;
+  background: transparent !important;
+}
+
+/* Explicit targeting of hamburger button container */
+.hamburger-btn-container {
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.hamburger-btn-container button {
+  background: none !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  text-shadow: none !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+}
+
+.hamburger-btn-container button svg {
+  stroke-width: 3 !important;
+  width: 24px !important;
+  height: 24px !important;
+  box-shadow: none !important;
+  filter: none !important;
+  background: transparent !important;
+}
+
+/* Global override for hamburger menu - maximum specificity */
+html body nav div button[aria-label="Open menu"],
+html body nav div button.mobile-menu-btn,
+html body nav div.md\\:hidden button,
+html body nav .md\\:hidden button {
+  background: none !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  text-shadow: none !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+}
+
+html body nav div button[aria-label="Open menu"] svg,
+html body nav div button.mobile-menu-btn svg,
+html body nav div.md\\:hidden button svg,
+html body nav .md\\:hidden button svg {
+  stroke-width: 3 !important;
+  width: 24px !important;
+  height: 24px !important;
+  box-shadow: none !important;
+  filter: none !important;
+  background: transparent !important;
 }
 
 /* Force all nav items to be blue with white text in mobile view */

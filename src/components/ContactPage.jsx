@@ -66,7 +66,7 @@ const ContactPage = () => {
                 </div>
                 <div className="ml-3">
                   <p className="text-gray-900 font-medium">Email</p>
-                  <p className="text-gray-600">support@weighttracker.com</p>
+                  <p className="text-gray-600">micah@snaplicious.ai</p>
                 </div>
               </div>
               
@@ -78,7 +78,7 @@ const ContactPage = () => {
                 </div>
                 <div className="ml-3">
                   <p className="text-gray-900 font-medium">Phone</p>
-                  <p className="text-gray-600">(123) 456-7890</p>
+                  <p className="text-gray-600">437-858-8075</p>
                 </div>
               </div>
               
@@ -91,7 +91,7 @@ const ContactPage = () => {
                 </div>
                 <div className="ml-3">
                   <p className="text-gray-900 font-medium">Address</p>
-                  <p className="text-gray-600">123 Health Street, Fitness City, FC 12345</p>
+                  <p className="text-gray-600">Toronto, Ontario</p>
                 </div>
               </div>
             </div>

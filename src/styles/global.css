@@ -106,14 +106,21 @@ button {
   border-radius: 0.5rem;
 }
 
-/* Fix for Safari focus ring */
+/* Improve focus accessibility while removing visible outlines */
 *:focus {
-  outline: none;
+  outline: none !important;
 }
 
 *:focus-visible {
-  outline: 2px solid #3B82F6;
-  outline-offset: 2px;
+  outline: none !important;
+}
+
+/* Only apply focus styles to form elements but not navigation */
+input:focus, 
+textarea:focus, 
+select:focus {
+  outline: 2px solid rgba(37, 99, 235, 0.5) !important;
+  outline-offset: 2px !important;
 }
 
 /* Fix for Safari transitions */
@@ -263,5 +270,416 @@ h1, h2, h3, h4, h5, h6, p, span, a, button {
     .chrome-spacing {
       padding-top: calc(6rem + 8px);
     }
+  }
+}
+
+/* Mobile Menu Styles */
+/* Styles for the mobile menu across the entire app */
+@media only screen and (max-width: 767px) {
+  /* Hamburger menu button styling */
+  .mobile-menu-btn,
+  button[aria-label="Open menu"],
+  nav button[aria-label="Open menu"] {
+    background: none !important;
+    background-color: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    outline: none !important;
+    text-shadow: none !important;
+    z-index: 60 !important;
+    -webkit-appearance: none !important;
+  }
+  
+  /* Mobile menu hamburger icon */
+  .mobile-menu-btn svg,
+  button[aria-label="Open menu"] svg,
+  nav button[aria-label="Open menu"] svg {
+    stroke-width: 3 !important;
+    width: 24px !important;
+    height: 24px !important;
+    box-shadow: none !important;
+    filter: none !important;
+    background: transparent !important;
+  }
+  
+  /* Mobile menu container */
+  .mobile-menu {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 300px;
+    height: 100vh;
+    background: linear-gradient(to right, rgba(61, 127, 239, 0.1), rgba(61, 127, 239, 0.2)) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 50;
+    transform: translateX(100%);
+    transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+    padding-top: calc(env(safe-area-inset-top) + 20px);
+    overflow-y: auto;
+    box-shadow: none !important;
+    border-left: none !important;
+  }
+  
+  /* Active states and hover states */
+  .mobile-menu .bg-blue-700,
+  .mobile-menu .hover\:bg-blue-700,
+  .mobile-menu .active,
+  .mobile-menu [aria-expanded="true"],
+  .mobile-menu .bg-red-600,
+  .mobile-menu .hover\:bg-red-700 {
+    background-color: transparent !important;
+    background: none !important;
+  }
+  
+  /* Special handling for dropdown buttons */
+  .mobile-menu button[aria-haspopup="true"] {
+    background-color: transparent !important;
+    border: none !important;
+  }
+  
+  /* Dropdown content specifically */
+  .mobile-dropdown, 
+  .mobile-dropdown.open {
+    background-color: transparent !important;
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  
+  /* Open mobile menu state */
+  .mobile-menu.open {
+    transform: translateX(0);
+  }
+  
+  /* Mobile menu overlay */
+  body.mobile-menu-open::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(1px);
+    -webkit-backdrop-filter: blur(1px);
+    z-index: 40;
+    pointer-events: auto;
+  }
+  
+  /* Close button styling */
+  .mobile-menu-close {
+    position: absolute;
+    top: calc(env(safe-area-inset-top) + 15px);
+    right: 15px;
+    background: transparent;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .mobile-menu-close:hover {
+    background: transparent;
+  }
+}
+
+/* iPad-specific mobile menu styles */
+@media only screen and (min-width: 768px) and (max-width: 1112px) {
+  /* Hide desktop menu on iPad */
+  nav .hidden.md\\:flex {
+    display: none !important;
+  }
+  
+  /* Show mobile menu button on iPad */
+  nav .mobile-menu-btn {
+    display: flex !important;
+  }
+  
+  /* Style the hamburger menu button */
+  nav .md\\:hidden button {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    z-index: 51;
+  }
+  
+  /* Override desktop media queries for tablet */
+  nav .md\\:hidden {
+    display: flex !important;
+  }
+}
+
+/* Remove focus outlines from navigation items */
+nav a, 
+nav button, 
+.mobile-menu a,
+.mobile-menu button {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
+  border-radius: 0 !important;
+  text-decoration: none !important;
+}
+
+nav a:focus, 
+nav button:focus, 
+.mobile-menu a:focus,
+.mobile-menu button:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+  background-color: transparent !important;
+}
+
+/* Override the default focus styles for navigation elements */
+nav a:focus-visible, 
+nav button:focus-visible, 
+.mobile-menu a:focus-visible,
+.mobile-menu button:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+  background-color: transparent !important;
+}
+
+/* Specific overrides for mobile menu items */
+.mobile-menu a,
+.mobile-menu button {
+  background-color: transparent !important;
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.mobile-menu a:hover,
+.mobile-menu button:hover {
+  background-color: transparent !important;
+  color: rgba(191, 219, 254, 1) !important; /* text-blue-200 equivalent */
+}
+
+/* Ensure all navigation elements in the mobile menu have no background */
+.mobile-menu .flex,
+.mobile-menu .w-full,
+.mobile-menu .rounded-md,
+.mobile-menu [class*="bg-"],
+.mobile-menu [class*="hover:bg-"] {
+  background-color: transparent !important;
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Target specific menu items shown in the screenshot */
+.mobile-menu [href="/"],
+.mobile-menu [href="/about"],
+.mobile-menu [href="/stay-healthy"],
+.mobile-menu [href="/contact"],
+.mobile-menu [href="/login"] {
+  background-color: transparent !important;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  text-decoration: none !important;
+}
+
+/* Specific styling for menu links in hover state */
+.mobile-menu [href="/"]:hover,
+.mobile-menu [href="/about"]:hover,
+.mobile-menu [href="/stay-healthy"]:hover,
+.mobile-menu [href="/contact"]:hover,
+.mobile-menu [href="/login"]:hover {
+  background-color: transparent !important;
+  color: rgba(191, 219, 254, 1) !important; /* text-blue-200 */
+}
+
+/* Force transparent background on specific landing page menu items */
+.landing-page-nav .mobile-menu a,
+.landing-page-nav .mobile-menu button {
+  background-color: transparent !important;
+  background: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+}
+
+/* Override any hover backgrounds on mobile menu items */
+.mobile-menu a:hover,
+.mobile-menu button:hover {
+  background-color: transparent !important;
+  background: none !important;
+}
+
+/* Goals Component Styles */
+.goals-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.goals-content {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .goals-content {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.goal-form-container {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+}
+
+.goal-form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 1rem;
+}
+
+.goals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.goal-card {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: box-shadow 0.2s ease;
+}
+
+.goal-card:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.goal-card.expanded {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.goal-header {
+  cursor: pointer;
+  padding: 1rem;
+}
+
+.goal-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.goal-progress-container {
+  height: 0.5rem;
+  background-color: #e5e7eb;
+  border-radius: 9999px;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+}
+
+.goal-progress-bar {
+  height: 100%;
+  background-color: #3b82f6;
+  border-radius: 9999px;
+}
+
+.goal-summary {
+  font-size: 0.875rem;
+  color: #4b5563;
+}
+
+.goal-deadline {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.goal-details {
+  padding: 1rem;
+  background-color: #f9fafb;
+  border-top: 1px solid #e5e7eb;
+}
+
+.goal-icons {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.icon-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+}
+
+.icon-button:hover {
+  background-color: #f3f4f6;
+  color: #1f2937;
+}
+
+.suggestion-container {
+  background-color: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 0.5rem;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.suggestion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.close-suggestion {
+  cursor: pointer;
+  color: #6b7280;
+}
+
+.close-suggestion:hover {
+  color: #1f2937;
+}
+
+.suggestion-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+@media (max-width: 640px) {
+  .suggestion-options {
+    grid-template-columns: 1fr;
   }
 } 

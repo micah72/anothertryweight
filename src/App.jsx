@@ -54,6 +54,7 @@ function AppContent() {
   const [orientation, setOrientation] = useState(window.innerWidth > window.innerHeight ? 'landscape' : 'portrait');
   const [isStandalone, setIsStandalone] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
+  const [isIPad, setIsIPad] = useState(false);
   
   // Detect browser and device type
   useEffect(() => {
@@ -83,11 +84,14 @@ function AppContent() {
     }
     
     // Add class for iPad detection
-    const isIPad = /iPad/i.test(navigator.userAgent) || 
+    const isIPadCheck = /iPad/i.test(navigator.userAgent) || 
       (navigator.maxTouchPoints && 
        navigator.maxTouchPoints > 2 && 
        /MacIntel/.test(navigator.platform));
-    if (isIPad) {
+    
+    setIsIPad(isIPadCheck);
+    
+    if (isIPadCheck) {
       document.body.classList.add('ipad');
       
       // Add orientation class
@@ -115,10 +119,22 @@ function AppContent() {
       if (orientation !== newOrientation) {
         setOrientation(newOrientation);
         
-        if (isIPad) {
+        if (isIPadCheck) {
           document.body.classList.remove('ipad-landscape', 'ipad-portrait');
           document.body.classList.add(newOrientation === 'landscape' ? 'ipad-landscape' : 'ipad-portrait');
         }
+      }
+      
+      // Handle iPad-specific menu display based on window width
+      const isTablet = window.innerWidth >= 768 && window.innerWidth <= 1112;
+      if (isTablet) {
+        // Force mobile menu on iPad regardless of md: breakpoint
+        document.querySelectorAll('nav .md\\:hidden').forEach(el => {
+          el.style.display = 'flex';
+        });
+        document.querySelectorAll('nav .hidden.md\\:flex').forEach(el => {
+          el.style.display = 'none';
+        });
       }
     };
     
@@ -127,19 +143,69 @@ function AppContent() {
     window.addEventListener('orientationchange', handleResize);
     
     // Fix for Safari scrolling issues
-    if (isSafari || isIPad) {
+    if (isSafari || isIPadCheck) {
       document.documentElement.style.height = '100%';
       document.body.style.height = '100%';
       document.body.style.overscrollBehavior = 'none';
     }
     
+    // Global hamburger menu handler for consistency across all pages
+    const setupHamburgerMenu = () => {
+      // When the mobile menu button is clicked
+      const handleMenuOpen = () => {
+        document.body.classList.add('mobile-menu-open');
+      };
+      
+      // When the close button or overlay is clicked
+      const handleMenuClose = () => {
+        document.body.classList.remove('mobile-menu-open');
+      };
+      
+      // Event listener for menu buttons
+      document.addEventListener('click', (e) => {
+        // Open menu when hamburger button is clicked
+        if (e.target.closest('.mobile-menu-btn')) {
+          handleMenuOpen();
+        }
+        
+        // Close menu when close button is clicked
+        if (e.target.closest('.mobile-menu-close')) {
+          handleMenuClose();
+        }
+        
+        // Close menu when clicking overlay (outside the menu)
+        if (document.body.classList.contains('mobile-menu-open') && 
+            !e.target.closest('.mobile-menu') && 
+            !e.target.closest('.mobile-menu-btn')) {
+          handleMenuClose();
+        }
+        
+        // Close menu when clicking a menu item
+        if (e.target.closest('.mobile-menu a, .mobile-menu button')) {
+          handleMenuClose();
+        }
+      });
+    };
+    
+    // Setup the hamburger menu
+    setupHamburgerMenu();
+    
+    // Call handleResize once to set up the iPad menu correctly
+    handleResize();
+    
     return () => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('orientationchange', handleResize);
-      // Clean up admin class
+      document.body.classList.remove('safari');
+      document.body.classList.remove('ios-device');
+      document.body.classList.remove('pwa-mode');
+      document.body.classList.remove('ipad');
+      document.body.classList.remove('ipad-landscape');
+      document.body.classList.remove('ipad-portrait');
       document.body.classList.remove('admin-user');
+      document.body.classList.remove('mobile-menu-open');
     };
-  }, [orientation, userIsAdmin]);
+  }, [userIsAdmin, orientation]);
 
   return (
     <>

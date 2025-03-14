@@ -211,17 +211,17 @@ const RefrigeratorGrid = () => {
   console.log('Rendering refrigerator grid with entries:', entries);
 
   return (
-    <div className="max-w-6xl mx-auto p-4 sm:p-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-        <div>
-          <h2 className="text-3xl font-bold text-white drop-shadow-sm pb-1">
+    <div className="max-w-6xl mx-auto px-4 py-5 sm:p-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-5">
+        <div className="mb-4 sm:mb-0 pl-2 pr-3">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white drop-shadow-sm pb-2 tracking-wide">
             Refrigerator Analysis History
           </h2>
-          <p className="text-white text-sm md:text-base opacity-90">Track your food inventory and get personalized recipe suggestions</p>
+          <p className="text-white text-sm md:text-base opacity-90 mt-1 tracking-normal">Track your food inventory and get personalized recipe suggestions</p>
         </div>
         <Link 
           to="/scan" 
-          className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+          className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-full text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 w-full sm:w-auto"
         >
           <Camera className="w-5 h-5 mr-2" />
           Scan Refrigerator
@@ -240,7 +240,7 @@ const RefrigeratorGrid = () => {
                   <img
                     src={entry.imagePath}
                     alt="Refrigerator contents"
-                    className="w-full h-56 object-cover transition-transform duration-700 group-hover:scale-105"
+                    className="w-full h-48 sm:h-56 object-cover transition-transform duration-700 group-hover:scale-105"
                     loading="lazy"
                     onError={(e) => {
                       console.error('Image failed to load:', entry.imagePath);
@@ -249,7 +249,7 @@ const RefrigeratorGrid = () => {
                     }}
                   />
                 ) : (
-                  <div className="w-full h-56 bg-gray-200 flex items-center justify-center">
+                  <div className="w-full h-48 sm:h-56 bg-gray-200 flex items-center justify-center">
                     <span className="text-gray-500">No image available</span>
                   </div>
                 )}
@@ -274,7 +274,7 @@ const RefrigeratorGrid = () => {
                 </button>
               </div>
               
-              <div className="p-5">
+              <div className="p-4 sm:p-5">
                 {/* Items List */}
                 {analysisData.items && analysisData.items.length > 0 && (
                   <div className="mb-5">
@@ -320,7 +320,7 @@ const RefrigeratorGrid = () => {
                       <span className="w-1.5 h-5 bg-yellow-500 rounded-full mr-2"></span>
                       Use Soon
                     </h3>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {analysisData.expiringItems.map((item, index) => (
                         <div key={index} className="bg-yellow-50 border border-yellow-100 px-3 py-2 rounded-lg text-sm">
                           {typeof item === 'object' ? 

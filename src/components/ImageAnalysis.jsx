@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Camera, Upload, X, AlertCircle } from 'lucide-react';
+import { Camera, Upload, X, AlertCircle, Edit2 } from 'lucide-react';
 import OpenAIService from '../services/openaiService';
 import dbService from '../firebase/dbService';
 import LoadingSpinner from './LoadingSpinner';
@@ -62,6 +62,9 @@ const ImageAnalysis = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showCamera, setShowCamera] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedFoodName, setEditedFoodName] = useState('');
+  const [foodEntryId, setFoodEntryId] = useState(null);
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -114,7 +117,7 @@ const ImageAnalysis = () => {
     }
   };
 
-  const analyzeImage = async () => {
+  const analyzeImage = async (customFoodName = null) => {
     if (!selectedImage) {
       setError('Please select an image first');
       return;
@@ -137,7 +140,7 @@ const ImageAnalysis = () => {
         : `data:image/jpeg;base64,${selectedImage}`;
       
       // Call OpenAI API to analyze the image
-      const result = await openaiService.analyzeImage(imageToSend);
+      const result = await openaiService.analyzeImage(imageToSend, customFoodName);
       
       // Logging the result for debugging
       console.log('OpenAI Analysis Result:', result);
@@ -148,7 +151,7 @@ const ImageAnalysis = () => {
       
       // Ensure we have all required nutritional values
       const processedResult = {
-        foodName: result.foodName || 'Unknown Food',
+        foodName: customFoodName || result.foodName || 'Unknown Food',
         calories: result.calories || 0,
         healthScore: result.healthScore || 0,
         protein: result.protein || 0,
@@ -161,7 +164,7 @@ const ImageAnalysis = () => {
         portionSize: result.portionSize || 'Standard serving',
         nutritionSource: result.nutritionSource || 'Estimated by AI',
         healthScoreReason: result.healthScoreReason || 'Based on overall nutritional value',
-        analysisData: result.analysisData || JSON.stringify({
+        analysisData: JSON.stringify({
           protein: result.protein || 0,
           carbs: result.carbs || 0,
           fat: result.fat || 0,
@@ -171,29 +174,50 @@ const ImageAnalysis = () => {
           concerns: result.concerns || 'No concerns information available',
           nutritionSource: result.nutritionSource || 'Estimated by AI',
           healthScoreReason: result.healthScoreReason || 'Based on overall nutritional value',
-          portionSize: result.portionSize || 'Standard serving'
+          portionSize: result.portionSize || 'Standard serving',
+          standardServingSize: result.standardServingSize || 'Standard serving',
+          relativePortionSize: result.relativePortionSize || 1.0,
+          actualAmountDescription: result.actualAmountDescription || 'Standard serving size'
         })
       };
 
       console.log('Processed Result for Display:', processedResult);
 
-      // Save the analysis to Firebase
-      try {
-        await dbService.addFoodEntry(user.uid, {
-          imagePath: selectedImage,
-          foodName: processedResult.foodName,
-          calories: processedResult.calories,
-          healthScore: processedResult.healthScore,
-          analysisData: processedResult.analysisData,
-          type: 'food',
-          created_at: new Date()
-        });
-      } catch (dbError) {
-        console.error('Error saving to database:', dbError);
-        // Continue with the analysis even if saving fails
+      // If we already have a food entry ID and we're correcting the name, update the existing entry
+      if (foodEntryId && customFoodName) {
+        try {
+          await dbService.updateFoodEntry(foodEntryId, {
+            foodName: processedResult.foodName,
+            calories: processedResult.calories,
+            healthScore: processedResult.healthScore,
+            analysisData: processedResult.analysisData
+          });
+          console.log('Updated existing food entry with corrected data');
+        } catch (dbError) {
+          console.error('Error updating database with corrected data:', dbError);
+        }
+      } else {
+        // Save the analysis to Firebase as a new entry
+        try {
+          const entryId = await dbService.addFoodEntry(user.uid, {
+            imagePath: selectedImage,
+            foodName: processedResult.foodName,
+            calories: processedResult.calories,
+            healthScore: processedResult.healthScore,
+            analysisData: processedResult.analysisData,
+            type: 'food',
+            created_at: new Date()
+          });
+          setFoodEntryId(entryId);
+        } catch (dbError) {
+          console.error('Error saving to database:', dbError);
+          // Continue with the analysis even if saving fails
+        }
       }
 
       setAnalysis(processedResult);
+      // Reset editing state
+      setIsEditingName(false);
     } catch (error) {
       console.error('Analysis error:', error);
       
@@ -211,6 +235,30 @@ const ImageAnalysis = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEditNameClick = () => {
+    setEditedFoodName(analysis.foodName);
+    setIsEditingName(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingName(false);
+    setEditedFoodName('');
+  };
+
+  const handleNameChange = (e) => {
+    setEditedFoodName(e.target.value);
+  };
+
+  const handleSubmitNameEdit = async (e) => {
+    e.preventDefault();
+    if (!editedFoodName.trim()) {
+      return;
+    }
+    
+    // Reanalyze with the corrected food name
+    await analyzeImage(editedFoodName.trim());
   };
 
   const saveToGalleryAndRedirect = () => {
@@ -311,7 +359,7 @@ const ImageAnalysis = () => {
           
           <div className="p-6">
             <button
-              onClick={analyzeImage}
+              onClick={() => analyzeImage()}
               disabled={loading}
               className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium shadow-md hover:shadow-lg transition-all disabled:opacity-70 transform hover:-translate-y-0.5 active:translate-y-0"
             >
@@ -333,10 +381,20 @@ const ImageAnalysis = () => {
         </div>
       )}
 
-      {analysis && (
+      {analysis && !isEditingName && (
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
           <div className="p-6 sm:p-8">
-            <h3 className="text-2xl font-bold text-gray-800 mb-6">{analysis.foodName}</h3>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-bold text-gray-800">{analysis.foodName}</h3>
+              <button 
+                onClick={handleEditNameClick}
+                className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
+                title="Edit food name"
+              >
+                <Edit2 className="h-4 w-4 mr-1" />
+                <span className="text-sm">Edit</span>
+              </button>
+            </div>
             
             {/* Main nutrition metrics */}
             <div className="grid grid-cols-2 gap-4 mb-6">
@@ -505,6 +563,63 @@ const ImageAnalysis = () => {
                 View in Gallery
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {analysis && isEditingName && (
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+          <div className="p-6 sm:p-8">
+            <h3 className="text-xl font-bold text-gray-800 mb-4">Edit Food Name</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              If the AI incorrectly identified your food, you can edit the name and rescan to get accurate nutritional information.
+            </p>
+            
+            <form onSubmit={handleSubmitNameEdit} className="mb-6">
+              <div className="mb-4">
+                <label htmlFor="foodName" className="block text-sm font-medium text-gray-700 mb-1">
+                  Food Name
+                </label>
+                <input
+                  type="text"
+                  id="foodName"
+                  value={editedFoodName}
+                  onChange={handleNameChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter correct food name"
+                  required
+                />
+              </div>
+              
+              <div className="flex space-x-3">
+                <button
+                  type="button"
+                  onClick={handleCancelEdit}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+                >
+                  {loading ? (
+                    <>
+                      <LoadingSpinner className="w-4 h-4 mr-2" />
+                      Analyzing...
+                    </>
+                  ) : (
+                    <>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                      Rescan with Correct Name
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
