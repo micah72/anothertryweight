@@ -19,6 +19,42 @@ const LandingPage = () => {
   const [orientation, setOrientation] = useState(window.innerWidth > window.innerHeight ? 'landscape' : 'portrait');
   const [successMessage, setSuccessMessage] = useState('Thank you for joining our waitlist!');
 
+  // Add direct Admin badge fix
+  useEffect(() => {
+    // Apply specific fixes for the Admin badge in the header
+    const style = document.createElement('style');
+    style.textContent = `
+      /* Direct targeting of Admin badge in mobile on landing page */
+      @media only screen and (max-width: 767px) {
+        /* Target all variations of the Admin badge */
+        span.bg-yellow-400, 
+        span.rounded-full.bg-yellow-400, 
+        .ml-2.bg-yellow-400,
+        .px-2.py-1.rounded-full.bg-yellow-400 {
+          display: inline-flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          padding: 2px 8px !important;
+          margin-left: 6px !important; 
+          font-size: 12px !important;
+          line-height: 18px !important;
+          border-radius: 9999px !important;
+          background-color: #facc15 !important;
+          color: black !important;
+          font-weight: 500 !important;
+          vertical-align: middle !important;
+          position: relative !important;
+          top: 0 !important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
   // Detect Safari, iPad, and iPhone on component mount
   useEffect(() => {
     // Safari detection
@@ -1239,6 +1275,81 @@ const LandingPage = () => {
         
         .safe-padding-right {
           padding-right: max(env(safe-area-inset-right), 20px) !important;
+        }
+
+        /* Fix Admin button on landing page for mobile */
+        @media only screen and (max-width: 767px) {
+          /* Target the Admin badge/button specifically */
+          .landing-page nav .bg-yellow-400,
+          nav .rounded-full.bg-yellow-400,
+          nav .bg-yellow-400.px-2.py-1.rounded-full,
+          nav span.bg-yellow-400 {
+            display: inline-flex !important;
+            align-items: center !important;
+            padding: 0.25rem 0.75rem !important;
+            margin-left: 0.5rem !important;
+            font-size: 0.75rem !important;
+            vertical-align: middle !important;
+            position: relative !important;
+            top: 0 !important;
+            transform: none !important;
+          }
+          
+          /* Additional specific fixes for Admin button */
+          div:has(> span.bg-yellow-400),
+          a:has(> span.bg-yellow-400),
+          button:has(> span.bg-yellow-400),
+          .header-admin-badge,
+          span.admin-badge,
+          span[class*="admin"],
+          [class*="badge"] {
+            display: inline-flex !important;
+            align-items: center !important;
+            vertical-align: middle !important;
+            margin-left: 0.5rem !important;
+            margin-right: 0.5rem !important;
+            height: auto !important;
+          }
+          
+          /* More specific targeting for the yellow Admin badge */
+          span.bg-yellow-400, 
+          span.text-black.font-medium.bg-yellow-400,
+          .admin-text,
+          [class*="admin-badge"] {
+            padding: 0.25rem 0.75rem !important;
+            border-radius: 9999px !important;
+            font-size: 0.75rem !important;
+            line-height: 1rem !important;
+            font-weight: 500 !important;
+            color: rgba(0, 0, 0, 0.8) !important;
+            background-color: #facc15 !important; /* yellow-400 */
+            vertical-align: middle !important;
+            display: inline-block !important;
+            text-align: center !important;
+            position: relative !important;
+            top: 0 !important;
+          }
+          
+          /* Fix spacing around the nav items on landing */
+          .landing-page nav .flex.items-center {
+            gap: 0.5rem !important;
+          }
+          
+          /* Ensure proper vertical alignment */
+          .landing-page nav .site-logo-container,
+          nav .flex-shrink-0.flex.items-center {
+            display: flex !important;
+            align-items: center !important;
+            height: auto !important;
+          }
+          
+          /* Adjust spacing specifically for the logo and admin badge container */
+          nav .flex.items-center.justify-between,
+          nav .flex.items-center.justify-between > div {
+            display: flex !important;
+            align-items: center !important;
+            gap: 0.5rem !important;
+          }
         }
       `}</style>
 

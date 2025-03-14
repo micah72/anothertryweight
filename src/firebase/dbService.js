@@ -165,16 +165,111 @@ const dbService = {
       if (!entryId) {
         throw new Error('No entry ID provided');
       }
-      
+
       const entryRef = doc(db, 'foodEntries', entryId);
-      await updateDoc(entryRef, {
-        ...data,
-        updated_at: serverTimestamp()
-      });
-      return true;
+      await updateDoc(entryRef, data);
+      return entryId;
     } catch (error) {
       console.error('Error updating food entry:', error);
       throw error;
+    }
+  },
+
+  // Add calorie history record for archiving weekly calorie data
+  addCalorieHistory: async (userId, data) => {
+    try {
+      if (!userId) {
+        throw new Error('No user ID provided');
+      }
+
+      const historyData = {
+        ...data,
+        userId,
+        created_at: serverTimestamp()
+      };
+
+      const docRef = await addDoc(collection(db, 'calorieHistory'), historyData);
+      return docRef.id;
+    } catch (error) {
+      console.error('Error adding calorie history:', error);
+      throw error;
+    }
+  },
+
+  // Get calorie history records
+  getCalorieHistory: async (userId, limitCount = 10) => {
+    try {
+      if (!userId) {
+        throw new Error('No user ID provided');
+      }
+
+      const q = query(
+        collection(db, 'calorieHistory'),
+        where('userId', '==', userId),
+        orderBy('weekStart', 'desc'),
+        limit(limitCount)
+      );
+
+      const querySnapshot = await getDocs(q);
+      const history = [];
+      querySnapshot.forEach((doc) => {
+        history.push({ id: doc.id, ...doc.data() });
+      });
+
+      return history;
+    } catch (error) {
+      console.error('Error getting calorie history:', error);
+      throw error;
+    }
+  },
+
+  // subscribe to calorie history changes
+  subscribeCalorieHistory: (userId, callback, errorCallback) => {
+    try {
+      if (!userId) {
+        console.error('No user ID provided for calorie history subscription');
+        if (typeof errorCallback === 'function') {
+          errorCallback(new Error('No user ID provided'));
+        }
+        return () => {};
+      }
+
+      const q = query(
+        collection(db, 'calorieHistory'),
+        where('userId', '==', userId),
+        orderBy('weekStart', 'desc')
+      );
+
+      const unsubscribe = onSnapshot(q,
+        (snapshot) => {
+          try {
+            const history = [];
+            snapshot.forEach((doc) => {
+              history.push({ id: doc.id, ...doc.data() });
+            });
+            callback(history);
+          } catch (error) {
+            console.error('Error processing calorie history snapshot:', error);
+            if (typeof errorCallback === 'function') {
+              errorCallback(error);
+            }
+          }
+        },
+        (error) => {
+          console.error('Error in calorie history subscription:', error);
+          if (typeof errorCallback === 'function') {
+            errorCallback(error);
+          }
+        }
+      );
+
+      return unsubscribe;
+    } catch (error) {
+      console.error('Error setting up calorie history subscription:', error);
+      if (typeof errorCallback === 'function') {
+        errorCallback(error);
+      }
+      return () => {};
     }
   },
 
@@ -414,6 +509,192 @@ const dbService = {
       await deleteDoc(doc(db, 'goals', goalId));
     } catch (error) {
       console.error('Error deleting goal:', error);
+      throw error;
+    }
+  },
+
+  // Weight entries operations
+  addWeightEntry: async (userId, entryData) => {
+    try {
+      if (!userId) {
+        throw new Error('No user ID provided');
+      }
+      
+      // Extract the date value
+      let dateValue = entryData.date || new Date().toISOString().split('T')[0];
+      
+      // Fix for timezone issues: ensure the date is not shifted
+      // For YYYY-MM-DD format, we need to append the time part to prevent timezone shifts
+      if (dateValue.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        // Add T12:00:00 to set it to noon in the local timezone
+        // This prevents date shifts across timezones
+        const localDate = new Date(`${dateValue}T12:00:00`);
+        dateValue = localDate.toISOString().split('T')[0];
+      }
+      
+      // Ensure all required fields are present
+      const weightEntry = {
+        userId,
+        goalId: entryData.goalId,
+        date: dateValue,
+        weight: parseFloat(entryData.weight) || 0,
+        unit: entryData.unit || 'kg', // Store the unit used (kg or lb)
+        notes: entryData.notes || '',
+        created_at: serverTimestamp(),
+        updated_at: serverTimestamp()
+      };
+
+      const docRef = await addDoc(collection(db, 'weightEntries'), weightEntry);
+      return docRef.id;
+    } catch (error) {
+      console.error('Error adding weight entry:', error);
+      throw error;
+    }
+  },
+
+  // Get weight entries for a specific goal
+  getWeightEntries: async (userId, goalId, limitCount = 100) => {
+    try {
+      if (!userId) {
+        throw new Error('No user ID provided');
+      }
+      
+      let q;
+      
+      if (goalId) {
+        // Query for entries for a specific goal - without compound sorting to avoid index requirement
+        q = query(
+          collection(db, 'weightEntries'),
+          where('userId', '==', userId),
+          where('goalId', '==', goalId)
+          // Removed: orderBy('date', 'desc')
+        );
+      } else {
+        // Query for all user's weight entries
+        q = query(
+          collection(db, 'weightEntries'),
+          where('userId', '==', userId)
+          // Removed: orderBy('date', 'desc')
+        );
+      }
+      
+      const querySnapshot = await getDocs(q);
+      // Instead of sorting in the query, sort in JavaScript
+      const entries = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      
+      // Sort entries by date (newest first)
+      return entries.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, limitCount);
+    } catch (error) {
+      console.error('Error getting weight entries:', error);
+      throw error;
+    }
+  },
+
+  // Subscribe to weight entries changes for a specific goal
+  subscribeWeightEntries: (userId, goalId, callback, errorCallback) => {
+    try {
+      if (!userId) {
+        console.error('No user ID provided for weight entries subscription');
+        if (typeof errorCallback === 'function') {
+          errorCallback(new Error('No user ID provided'));
+        }
+        return () => {};
+      }
+      
+      let q;
+      
+      if (goalId) {
+        // Query for entries for a specific goal - without compound sorting to avoid index requirement
+        q = query(
+          collection(db, 'weightEntries'),
+          where('userId', '==', userId),
+          where('goalId', '==', goalId)
+          // Removed: orderBy('date', 'desc')
+        );
+      } else {
+        // Query for all user's weight entries
+        q = query(
+          collection(db, 'weightEntries'),
+          where('userId', '==', userId)
+          // Removed: orderBy('date', 'desc')
+        );
+      }
+
+      const unsubscribe = onSnapshot(q, 
+        (snapshot) => {
+          try {
+            const entries = [];
+            snapshot.forEach((doc) => {
+              entries.push({ id: doc.id, ...doc.data() });
+            });
+            
+            // Sort entries by date in JavaScript instead of in the query
+            entries.sort((a, b) => new Date(b.date) - new Date(a.date));
+            callback(entries);
+          } catch (error) {
+            console.error('Error processing weight entries snapshot:', error);
+            if (typeof errorCallback === 'function') {
+              errorCallback(error);
+            } else {
+              callback([]);
+            }
+          }
+        },
+        (error) => {
+          console.error('Error in weight entries subscription:', error);
+          if (typeof errorCallback === 'function') {
+            errorCallback(error);
+          } else {
+            callback([]);
+          }
+        }
+      );
+      
+      return unsubscribe;
+    } catch (error) {
+      console.error('Error setting up weight entries subscription:', error);
+      if (typeof errorCallback === 'function') {
+        errorCallback(error);
+      } else {
+        callback([]);
+      }
+      return () => {};
+    }
+  },
+  
+  // Delete a weight entry
+  deleteWeightEntry: async (entryId) => {
+    try {
+      if (!entryId) {
+        throw new Error('No entry ID provided');
+      }
+      
+      await deleteDoc(doc(db, 'weightEntries', entryId));
+      return true;
+    } catch (error) {
+      console.error('Error deleting weight entry:', error);
+      throw error;
+    }
+  },
+
+  // Update a weight entry
+  updateWeightEntry: async (entryId, data) => {
+    try {
+      if (!entryId) {
+        throw new Error('No entry ID provided');
+      }
+
+      const entryRef = doc(db, 'weightEntries', entryId);
+      await updateDoc(entryRef, {
+        ...data,
+        updated_at: serverTimestamp()
+      });
+      return entryId;
+    } catch (error) {
+      console.error('Error updating weight entry:', error);
       throw error;
     }
   },
